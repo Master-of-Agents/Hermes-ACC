@@ -32,9 +32,11 @@ permissions:
   destructive_ops_require_confirmation: true
 credentials_required:
   - TELEGRAM_BOT_TOKEN
-  - ANTHROPIC_API_KEY
 credentials_optional:
+  - ANTHROPIC_API_KEY   # Not configured — operator uses Claude subscription, not API.
   - OPENROUTER_API_KEY  # Not configured — no account. Future LLM router if needed.
+# NOTE: At least one LLM API key (ANTHROPIC or OPENROUTER) must be configured
+# before this agent can make autonomous LLM calls. Blocking deployment prerequisite.
 communication_channels:
   - "telegram:8615165545"
 memory_location: "/opt/data (HERMES_HOME)"

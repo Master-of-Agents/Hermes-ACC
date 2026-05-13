@@ -21,7 +21,7 @@ Note the `required_by` field — these containers/scripts/agents will be affecte
 | Credential | Provider location |
 |---|---|
 | TELEGRAM_BOT_TOKEN | @BotFather → /revoke (creates new) |
-| ANTHROPIC_API_KEY | console.anthropic.com → API keys |
+| ANTHROPIC_API_KEY | console.anthropic.com → API keys *(optional — not configured)* |
 | GITHUB_INTEGRATION | GitHub → repo → Settings → Deploy keys |
 | OPENROUTER_API_KEY | openrouter.ai → dashboard → API keys *(optional — not configured)* |
 

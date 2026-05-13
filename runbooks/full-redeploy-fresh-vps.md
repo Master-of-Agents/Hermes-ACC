@@ -63,7 +63,7 @@ Follow `checks/post-deploy-verification.md` in full.
 If the old VPS was lost under suspicious circumstances or could be in attacker hands:
 
 1. Rotate `TELEGRAM_BOT_TOKEN` per `runbooks/telegram-bot-issue.md`.
-2. Rotate `ANTHROPIC_API_KEY` per `runbooks/rotate-api-key.md`. Rotate `OPENROUTER_API_KEY` too if it is configured.
+2. Rotate any configured LLM API keys (`ANTHROPIC_API_KEY`, `OPENROUTER_API_KEY`) per `runbooks/rotate-api-key.md` if they are configured.
 3. Rotate VPS SSH key — generate new, remove old from authorized_keys.
 4. Update all `last_rotated` dates in `credentials/credential-registry.yaml`.
 
