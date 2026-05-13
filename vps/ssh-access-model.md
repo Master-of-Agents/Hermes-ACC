@@ -29,6 +29,8 @@ AuthorizedKeysFile .ssh/authorized_keys
 The VPS uses a separate SSH deploy key for cloning Hermes-ACC:
 
 - Key: `/home/hermesctl/.ssh/id_ed25519_hermes_acc`
+- Fingerprint: `SHA256:SHYgZ3eS1PwPnw0vmRYliv/pr9SzlxuCTv+GqiBrbvY`
+- Added: 2026-05-13
 - Public key registered in GitHub → Master-of-Agents/Hermes-ACC → Settings → Deploy keys
 - Registry entry: `credentials/credential-registry.yaml → GITHUB_INTEGRATION`
 
