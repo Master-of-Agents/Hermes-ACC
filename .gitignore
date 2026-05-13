@@ -25,6 +25,8 @@ age-identity*
 *.dec
 *.decrypted
 *.plain
+*.plain.yaml
+*.plain.env
 *.unenc
 secrets/*.yaml.dec
 secrets/*.decrypted

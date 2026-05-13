@@ -15,7 +15,7 @@ servers:
     sudo_model: "passwordless for hermesctl (MVP — revisit if second user added)"
     docker_group: true
     firewall: ufw
-    backup_recipient_age_public: "age1REPLACE_WITH_OPERATOR_PUBLIC_KEY"
+    backup_recipient_age_public: "age1wm97dzvzx4aswpwdjvjyqsggxdvhjsxclvwa2km8yhs9kjrkxghqs243cn"
     status: active
     purpose: "Primary Hermes agent hosting server"
     notes: "Hostinger VPS. Provisioned by Hostinger bootstrap. See vps/hostinger-srv1663264.md."
