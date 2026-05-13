@@ -23,6 +23,7 @@
       }
     },
     "credentials_required": { "type": "array", "items": { "type": "string" } },
+    "credentials_optional": { "type": "array", "items": { "type": "string" } },
     "communication_channels": { "type": "array" },
     "memory_location":      { "type": "string" },
     "runtime_location":     { "type": "string" },

@@ -29,7 +29,7 @@ Key variables:
 |---|---|
 | `TELEGRAM_BOT_TOKEN` | Bot authentication (from sops) |
 | `TELEGRAM_HOME_CHAT_ID` | Primary operator channel (`8615165545`) |
-| `OPENROUTER_API_KEY` | LLM routing (from sops) |
+| `OPENROUTER_API_KEY` | LLM routing (optional — not configured, omit for MVP) |
 | `ANTHROPIC_API_KEY` | Direct Claude API (from sops) |
 | `HERMES_HOME` | Set to `/opt/data` by image defaults |
 

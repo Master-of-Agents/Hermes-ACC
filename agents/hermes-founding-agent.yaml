@@ -32,8 +32,9 @@ permissions:
   destructive_ops_require_confirmation: true
 credentials_required:
   - TELEGRAM_BOT_TOKEN
-  - OPENROUTER_API_KEY
   - ANTHROPIC_API_KEY
+credentials_optional:
+  - OPENROUTER_API_KEY  # Not configured — no account. Future LLM router if needed.
 communication_channels:
   - "telegram:8615165545"
 memory_location: "/opt/data (HERMES_HOME)"

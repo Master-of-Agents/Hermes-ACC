@@ -26,8 +26,9 @@ permissions:
     - "outbound https only"
   destructive_ops_require_confirmation: true
 credentials_required:
-  - OPENROUTER_API_KEY
   - TELEGRAM_BOT_TOKEN
+credentials_optional:
+  - OPENROUTER_API_KEY  # Not configured. Agent is planned; provider TBD at activation.
 communication_channels:
   - "telegram:8615165545"
 memory_location: "TBD — hermes-agents workspace"

@@ -21,9 +21,9 @@ Note the `required_by` field — these containers/scripts/agents will be affecte
 | Credential | Provider location |
 |---|---|
 | TELEGRAM_BOT_TOKEN | @BotFather → /revoke (creates new) |
-| OPENROUTER_API_KEY | openrouter.ai → dashboard → API keys |
 | ANTHROPIC_API_KEY | console.anthropic.com → API keys |
 | GITHUB_INTEGRATION | GitHub → repo → Settings → Deploy keys |
+| OPENROUTER_API_KEY | openrouter.ai → dashboard → API keys *(optional — not configured)* |
 
 **Do not revoke the old credential yet.**
 
