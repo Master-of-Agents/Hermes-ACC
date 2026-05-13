@@ -1,0 +1,62 @@
+# =============================================================================
+# Hermes-ACC .gitignore — secrets, keys, decrypted artifacts, local tooling
+# This repo is private but is NOT treated as a secret manager.
+# =============================================================================
+
+# --- Secrets / keys (NEVER commit) ---
+*.env
+!*.env.example
+!*.env.*.example
+*.key
+*.pem
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+id_ecdsa
+id_ecdsa.*
+*.ppk
+age*.txt
+age-identity*
+*.agekey
+.sops/
+
+# --- Decrypted artifacts ---
+*.dec
+*.decrypted
+*.plain
+*.unenc
+secrets/*.yaml.dec
+secrets/*.decrypted
+
+# --- Docker / runtime data ---
+**/auth.json
+**/session.json
+**/oauth*.json
+docker-volumes/
+hermes-data/
+.env.runtime
+
+# --- Backup archives (only .gitkeep is committed) ---
+backups/*.tar
+backups/*.tar.gz
+backups/*.tar.age
+backups/*.tar.bz2
+backups/*.tar.xz
+!backups/.gitkeep
+
+# --- Local tooling ---
+.envrc
+.direnv/
+.DS_Store
+.idea/
+.vscode/
+*.log
+*.swp
+*.swo
+*~
+__pycache__/
+*.pyc
+.cache/
+node_modules/
+.pre-commit-cache/

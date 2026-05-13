@@ -1,0 +1,64 @@
+---
+schema_version: "1.0"
+name: hermes-founding-agent
+role: "Founding Hermes agent — primary operator-facing AI"
+purpose: |
+  First-mover Hermes agent. Operates as the primary AI interface via Telegram,
+  executes coding and admin tasks under explicit operator confirmation, and
+  delegates to specialist agents as they come online.
+platform: hermes-runtime
+repository_ownership:
+  hermes_acc:
+    - "this manifest (metadata, permissions, recovery references)"
+    - "credentials_required name references"
+    - "deployment and runtime layout documentation"
+    - "allowed/forbidden operation policy"
+  hermes_agents:
+    - "agent prompt text"
+    - "skill packs"
+    - "workspace files"
+    - "conversation logs (out-of-repo or hermes-agents)"
+container_or_profile: hermes-agent-m5gt-hermes-agent-1
+tools_enabled:
+  - telegram
+  - llm_router
+  - shell_via_confirmation
+permissions:
+  filesystem:
+    - "/opt/hermes:ro"
+    - "/opt/data:rw"
+  network:
+    - "outbound https only"
+  destructive_ops_require_confirmation: true
+credentials_required:
+  - TELEGRAM_BOT_TOKEN
+  - OPENROUTER_API_KEY
+  - ANTHROPIC_API_KEY
+communication_channels:
+  - "telegram:8615165545"
+memory_location: "/opt/data (HERMES_HOME)"
+runtime_location: "/opt/hermes"
+run_command: "docker compose -f docker/docker-compose.hermes.yml up -d"
+deployment_method: docker-compose
+backup_requirements:
+  paths:
+    - "/opt/data"
+  frequency: daily
+recovery_procedure: "runbooks/rebuild-corrupted-container.md"
+owner: primary-admin
+current_status: active
+dependencies: []
+risk_level: medium
+allowed_operations:
+  - "read repository files"
+  - "respond to Telegram messages from home chat"
+  - "propose code or infrastructure changes"
+  - "execute non-destructive shell commands with operator confirmation"
+  - "open PRs for documentation or code changes"
+forbidden_operations:
+  - "rotate or revoke credentials without explicit operator confirmation"
+  - "delete volumes or backup archives"
+  - "modify UFW firewall rules"
+  - "push directly to main branch (except doc-only fixes)"
+  - "commit plaintext secrets or decrypted files"
+  - "spawn additional agents without operator approval"

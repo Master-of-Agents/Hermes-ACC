@@ -1,0 +1,55 @@
+---
+schema_version: "1.0"
+name: recruiting-operations-agent
+role: "Specialist agent for recruiting and HR operations"
+purpose: |
+  Drafts candidate outreach, tracks recruiting pipeline, schedules touchpoints,
+  and summarises candidate feedback. Low-risk — read-only access to most systems;
+  never sends external messages without operator confirmation.
+platform: hermes-runtime
+repository_ownership:
+  hermes_acc:
+    - "this manifest"
+  hermes_agents:
+    - "agent prompt text"
+    - "skill packs"
+    - "recruiting workspace files"
+container_or_profile: "(future) hermes-agent-recruiting"
+tools_enabled:
+  - telegram
+  - email_draft
+  - calendar_read
+permissions:
+  filesystem:
+    - "recruiting-workspace:rw (in hermes-agents)"
+  network:
+    - "outbound https only"
+  destructive_ops_require_confirmation: true
+credentials_required:
+  - OPENROUTER_API_KEY
+  - TELEGRAM_BOT_TOKEN
+communication_channels:
+  - "telegram:8615165545"
+memory_location: "TBD — hermes-agents workspace"
+runtime_location: "TBD — separate Hermes container"
+run_command: "TBD"
+deployment_method: docker-compose
+backup_requirements:
+  paths:
+    - "TBD (recruiting workspace)"
+  frequency: weekly
+recovery_procedure: "runbooks/add-new-agent.md"
+owner: primary-admin
+current_status: planned
+dependencies:
+  - hermes-founding-agent
+risk_level: low
+allowed_operations:
+  - "draft outreach messages for operator review"
+  - "summarise candidate pipeline"
+  - "read calendar"
+  - "track tasks in workspace"
+forbidden_operations:
+  - "send external email or messages without operator confirmation"
+  - "modify CRM or ATS directly"
+  - "access financial systems"

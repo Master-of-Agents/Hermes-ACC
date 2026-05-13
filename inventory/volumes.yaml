@@ -1,0 +1,22 @@
+---
+schema_version: "1.0"
+# Docker volume inventory. Update after every volume creation or destruction.
+volumes:
+  - id: hermes_data
+    name: hermes_data
+    type: named_volume
+    driver: local
+    mount_point_on_host: /var/lib/docker/volumes/hermes_data/_data
+    container_target: /opt/data
+    purpose: "HERMES_HOME — Hermes agent persistent state"
+    backup: true
+    backup_frequency: daily
+    backup_script: scripts/backup-hermes.sh
+    restore_script: scripts/restore-hermes.sh
+    owner_container: hermes-agent
+    host: srv1663264
+    status: active
+    notes: |
+      Contains config, session stores, auth tokens, skills, and memory.
+      Never mount this volume read-write from multiple containers simultaneously.
+      Auth tokens inside this volume are sensitive — backup encrypted with age.

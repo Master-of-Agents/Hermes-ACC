@@ -1,0 +1,20 @@
+---
+schema_version: "1.0"
+# Server inventory entry template — copy the entry below into inventory/servers.yaml.
+servers:
+  - id: REPLACE_WITH_HOSTNAME
+    provider: REPLACE_WITH_PROVIDER  # hostinger | hetzner | digitalocean | etc.
+    hostname: REPLACE_WITH_HOSTNAME
+    public_ip: REPLACE_WITH_IP
+    admin_user: hermesctl
+    ssh_port: 22
+    os: "Ubuntu 22.04 LTS"
+    arch: x86_64
+    timezone: UTC
+    sudo_model: "passwordless for hermesctl (MVP)"
+    docker_group: true
+    firewall: ufw
+    backup_recipient_age_public: "age1REPLACE_WITH_OPERATOR_PUBLIC_KEY"
+    status: planned
+    purpose: "REPLACE_WITH_PURPOSE"
+    notes: "REPLACE_WITH_NOTES"

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Master-of-Agents/Hermes-ACC/schemas/volume.schema.json",
+  "title": "VolumeInventory",
+  "description": "Schema for inventory/volumes.yaml",
+  "type": "object",
+  "required": ["schema_version", "volumes"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "volumes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "type", "purpose", "host"],
+        "properties": {
+          "id":                    { "type": "string" },
+          "name":                  { "type": "string" },
+          "type":                  { "type": "string", "enum": ["named_volume", "bind_mount", "tmpfs"] },
+          "driver":                { "type": "string" },
+          "mount_point_on_host":   { "type": "string" },
+          "container_target":      { "type": "string" },
+          "purpose":               { "type": "string" },
+          "backup":                { "type": "boolean" },
+          "backup_frequency":      { "type": "string" },
+          "backup_script":         { "type": "string" },
+          "restore_script":        { "type": "string" },
+          "owner_container":       { "type": "string" },
+          "host":                  { "type": "string" },
+          "status":                { "type": "string", "enum": ["active", "retired"] },
+          "notes":                 { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    }
+  }
+}

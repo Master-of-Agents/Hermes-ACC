@@ -1,0 +1,26 @@
+# Force LF line endings for all text files to ensure cross-platform consistency
+* text=auto eol=lf
+
+# Scripts must always be LF (shebang lines break on CRLF)
+*.sh    text eol=lf
+
+# YAML and Markdown: LF
+*.yaml  text eol=lf
+*.yml   text eol=lf
+*.md    text eol=lf
+*.txt   text eol=lf
+*.json  text eol=lf
+
+# sops-encrypted YAML is text (diffable ciphertext metadata)
+*.enc.yaml text eol=lf
+
+# Binaries: no line-ending conversion
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.gz    binary
+*.tar   binary
+*.zip   binary
+*.age   binary

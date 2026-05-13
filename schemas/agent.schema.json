@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Master-of-Agents/Hermes-ACC/schemas/agent.schema.json",
+  "title": "AgentManifest",
+  "description": "Schema for agents/*.yaml manifest files",
+  "type": "object",
+  "required": ["schema_version", "name", "role", "platform", "owner", "current_status", "risk_level"],
+  "properties": {
+    "schema_version":       { "type": "string", "const": "1.0" },
+    "name":                 { "type": "string" },
+    "role":                 { "type": "string" },
+    "purpose":              { "type": "string" },
+    "platform":             { "type": "string", "enum": ["hermes-runtime", "claude-code", "codex", "other"] },
+    "repository_ownership": { "type": "object" },
+    "container_or_profile": { "type": "string" },
+    "tools_enabled":        { "type": "array", "items": { "type": "string" } },
+    "permissions": {
+      "type": "object",
+      "properties": {
+        "filesystem":                     { "type": "array" },
+        "network":                        { "type": "array" },
+        "destructive_ops_require_confirmation": { "type": "boolean" }
+      }
+    },
+    "credentials_required": { "type": "array", "items": { "type": "string" } },
+    "communication_channels": { "type": "array" },
+    "memory_location":      { "type": "string" },
+    "runtime_location":     { "type": "string" },
+    "run_command":          { "type": "string" },
+    "deployment_method":    { "type": "string", "enum": ["docker-compose", "systemd", "manual", "n/a"] },
+    "backup_requirements":  { "type": "object" },
+    "recovery_procedure":   { "type": "string" },
+    "owner":                { "type": "string" },
+    "current_status":       { "type": "string", "enum": ["active", "planned", "deprecated"] },
+    "dependencies":         { "type": "array" },
+    "risk_level":           { "type": "string", "enum": ["low", "medium", "high"] },
+    "allowed_operations":   { "type": "array", "items": { "type": "string" } },
+    "forbidden_operations": { "type": "array", "items": { "type": "string" } }
+  }
+}

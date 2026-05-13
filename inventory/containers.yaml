@@ -1,0 +1,45 @@
+---
+schema_version: "1.0"
+# Authoritative container inventory.
+# Update after every container change (image pull, rename, port change, volume change).
+containers:
+  - id: hermes-agent
+    name: hermes-agent-m5gt-hermes-agent-1
+    image: ghcr.io/hostinger/hvps-hermes-agent:latest
+    image_previous: null  # set to previous tag before upgrades for rollback reference
+    host: srv1663264
+    restart_policy: unless-stopped
+    ports:
+      - host: 32768
+        container: 4860
+        protocol: tcp
+        purpose: "Hermes agent API / Telegram webhook relay"
+    volumes:
+      - source: hermes_data
+        target: /opt/data
+        type: volume
+        purpose: "HERMES_HOME — agent memory, config, token stores, skills"
+        backup: true
+        backup_path_on_host: "/var/lib/docker/volumes/hermes_data/_data"
+    env_file_runtime: "/run/hermes/.env"
+    env_sources:
+      - "sops:secrets/hermes.env.enc.yaml"
+    runtime_paths:
+      project: /opt/hermes
+      hermes_home: /opt/data
+    healthcheck:
+      kind: tcp
+      target_port: 4860
+      interval_seconds: 30
+      timeout_seconds: 5
+      retries: 3
+    logging:
+      driver: json-file
+      max_size: "10m"
+      max_files: 5
+    compose_file: "docker/docker-compose.hermes.yml"
+    owner: primary-admin
+    status: active
+    migration_note: |
+      Container was originally started ad-hoc by Hostinger provisioning.
+      Migrate to docker-compose.hermes.yml per runbooks/rebuild-corrupted-container.md Phase 2.

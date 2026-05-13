@@ -1,0 +1,29 @@
+---
+# Example compose file — copy and adapt for a new service.
+# Replace all REPLACE_* placeholders.
+
+services:
+  REPLACE_WITH_SERVICE_NAME:
+    image: REPLACE_WITH_IMAGE:REPLACE_WITH_TAG
+    container_name: REPLACE_WITH_CONTAINER_NAME
+    restart: unless-stopped
+    env_file:
+      - /run/REPLACE_WITH_SERVICE/.env
+    ports:
+      - "REPLACE_HOST_PORT:REPLACE_CONTAINER_PORT"
+    volumes:
+      - REPLACE_volume_name:/REPLACE_CONTAINER_PATH
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost REPLACE_CONTAINER_PORT || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+volumes:
+  REPLACE_volume_name:
+    name: REPLACE_volume_name

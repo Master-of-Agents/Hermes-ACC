@@ -1,0 +1,12 @@
+---
+schema_version: "1.0"
+# Domain and DNS inventory. Reserved for future use when domains are registered.
+domains: []
+# Example entry (add when a domain is assigned):
+# - id: hermes-primary
+#   fqdn: hermes.example.com
+#   registrar: REPLACE_ME
+#   dns_provider: REPLACE_ME
+#   points_to: srv1663264
+#   purpose: "Primary Hermes agent endpoint"
+#   status: planned

@@ -1,0 +1,47 @@
+---
+schema_version: "1.0"
+# Agent manifest template — copy to agents/<agent-name>.yaml and fill in.
+# Then add an entry to agents/agent-registry.yaml.
+name: REPLACE_WITH_SLUG
+role: "REPLACE_WITH_SHORT_ROLE_TITLE"
+purpose: |
+  REPLACE_WITH_ONE_PARAGRAPH_DESCRIPTION
+platform: hermes-runtime  # or: claude-code | codex | other
+repository_ownership:
+  hermes_acc:
+    - "this manifest (metadata, permissions, recovery references)"
+  hermes_agents:
+    - "agent prompt text"
+    - "skill packs"
+container_or_profile: "REPLACE_WITH_CONTAINER_NAME_OR_PROFILE_ID"
+tools_enabled:
+  - REPLACE_WITH_TOOL
+permissions:
+  filesystem:
+    - "REPLACE_WITH_PATH:rw"
+  network:
+    - "outbound https only"
+  destructive_ops_require_confirmation: true
+credentials_required:
+  - REPLACE_WITH_CREDENTIAL_NAME
+communication_channels:
+  - "telegram:8615165545"
+memory_location: "REPLACE_WITH_PATH"
+runtime_location: "REPLACE_WITH_PATH"
+run_command: "REPLACE_WITH_COMMAND"
+deployment_method: docker-compose  # or: manual | systemd | n/a
+backup_requirements:
+  paths:
+    - "REPLACE_WITH_PATH"
+  frequency: daily  # or: weekly | none
+recovery_procedure: "runbooks/add-new-agent.md"
+owner: primary-admin
+current_status: planned  # or: active | deprecated
+dependencies: []
+risk_level: low  # or: medium | high
+allowed_operations:
+  - "REPLACE_WITH_ALLOWED_OPERATION"
+forbidden_operations:
+  - "commit plaintext secrets"
+  - "push directly to main branch"
+  - "rotate or revoke credentials without operator confirmation"

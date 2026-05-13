@@ -1,0 +1,20 @@
+---
+schema_version: "1.0"
+# Docker network inventory. Update when adding containers or changing network topology.
+networks:
+  - id: default_bridge
+    name: bridge
+    driver: bridge
+    scope: local
+    purpose: "Default Docker bridge — MVP single-container setup"
+    containers: [hermes-agent]
+    notes: |
+      Single container setup uses default bridge for MVP.
+      When a second container joins, create a user-defined bridge (e.g., hermes-net)
+      and update this inventory.
+    host: srv1663264
+    status: active
+
+host_network:
+  ssh_port: 22
+  notes: "UFW deny-default. Allowed ports documented in inventory/ports.yaml."

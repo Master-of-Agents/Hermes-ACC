@@ -1,0 +1,30 @@
+---
+# Hermes agent compose template — copy to docker/docker-compose.hermes.yml
+# Replace all REPLACE_* placeholders with real values from inventory/.
+
+services:
+  hermes-agent:
+    image: ${HERMES_IMAGE:-REPLACE_WITH_IMAGE}
+    container_name: ${HERMES_CONTAINER_NAME:-hermes-agent}
+    restart: unless-stopped
+    env_file:
+      - /run/hermes/.env        # rendered by scripts/render-env-from-sops.sh
+    ports:
+      - "${HERMES_PORT_HOST:-REPLACE_HOST_PORT}:${HERMES_PORT_CONTAINER:-REPLACE_CONTAINER_PORT}"
+    volumes:
+      - hermes_data:/opt/data
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost ${HERMES_PORT_CONTAINER:-4860} || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+volumes:
+  hermes_data:
+    name: hermes_data

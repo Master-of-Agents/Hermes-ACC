@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Master-of-Agents/Hermes-ACC/schemas/container.schema.json",
+  "title": "Container",
+  "description": "Schema for inventory/containers.yaml entries",
+  "type": "object",
+  "required": ["schema_version", "containers"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "containers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "image", "host", "restart_policy"],
+        "properties": {
+          "id":             { "type": "string" },
+          "name":           { "type": "string" },
+          "image":          { "type": "string" },
+          "image_previous": { "type": ["string", "null"] },
+          "host":           { "type": "string" },
+          "restart_policy": { "type": "string", "enum": ["always", "unless-stopped", "on-failure", "no"] },
+          "ports": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["host", "container", "protocol"],
+              "properties": {
+                "host":      { "type": "integer" },
+                "container": { "type": "integer" },
+                "protocol":  { "type": "string" },
+                "purpose":   { "type": "string" }
+              }
+            }
+          },
+          "volumes":          { "type": "array" },
+          "env_file_runtime": { "type": "string" },
+          "env_sources":      { "type": "array", "items": { "type": "string" } },
+          "runtime_paths":    { "type": "object" },
+          "healthcheck":      { "type": "object" },
+          "logging":          { "type": "object" },
+          "compose_file":     { "type": "string" },
+          "owner":            { "type": "string" },
+          "status":           { "type": "string", "enum": ["active", "stopped", "retired"] },
+          "migration_note":   { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    }
+  }
+}

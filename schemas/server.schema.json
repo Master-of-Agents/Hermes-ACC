@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Master-of-Agents/Hermes-ACC/schemas/server.schema.json",
+  "title": "Server",
+  "description": "Schema for inventory/servers.yaml entries",
+  "type": "object",
+  "required": ["schema_version", "servers"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "servers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "provider", "hostname", "public_ip", "admin_user"],
+        "properties": {
+          "id":           { "type": "string" },
+          "provider":     { "type": "string" },
+          "hostname":     { "type": "string" },
+          "public_ip":    { "type": "string" },
+          "admin_user":   { "type": "string" },
+          "ssh_port":     { "type": "integer", "default": 22 },
+          "os":           { "type": "string" },
+          "arch":         { "type": "string" },
+          "timezone":     { "type": "string" },
+          "sudo_model":   { "type": "string" },
+          "docker_group": { "type": "boolean" },
+          "firewall":     { "type": "string" },
+          "backup_recipient_age_public": { "type": "string" },
+          "status":       { "type": "string", "enum": ["active", "decommissioned", "planned"] },
+          "purpose":      { "type": "string" },
+          "notes":        { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    }
+  }
+}

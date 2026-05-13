@@ -1,0 +1,4 @@
+# Hermes-ACC CODEOWNERS — single owner for MVP
+# All changes require review by the primary admin.
+# Revisit when a second human operator is added.
+* @Master-of-Agents

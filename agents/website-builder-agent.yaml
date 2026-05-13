@@ -1,0 +1,54 @@
+---
+schema_version: "1.0"
+name: website-builder-agent
+role: "Specialist agent for building and maintaining the public website"
+purpose: |
+  Generates and updates static site content, components, and configuration.
+  Opens PRs for all changes — never pushes directly to main. Operator reviews
+  and merges. Low-risk by design.
+platform: claude-code
+repository_ownership:
+  hermes_acc:
+    - "this manifest"
+  hermes_agents:
+    - "agent prompt text"
+    - "skill packs"
+container_or_profile: "n/a (workstation tool)"
+tools_enabled:
+  - edit
+  - write
+  - bash
+  - web_fetch
+permissions:
+  filesystem:
+    - "website repo: rw on feature branches only"
+  network:
+    - "github.com"
+    - "npm registry"
+    - "public internet for web_fetch (read-only)"
+  destructive_ops_require_confirmation: true
+credentials_required:
+  - GITHUB_INTEGRATION
+communication_channels:
+  - "operator-direct"
+memory_location: "n/a"
+runtime_location: "operator workstation"
+run_command: "claude-code in website repository"
+deployment_method: manual
+backup_requirements:
+  paths: []
+  frequency: none
+recovery_procedure: "n/a — re-clone from GitHub"
+owner: primary-admin
+current_status: planned
+dependencies: []
+risk_level: low
+allowed_operations:
+  - "open PRs for content, copy, and configuration changes"
+  - "run local dev server for preview"
+  - "fetch public URLs for research"
+forbidden_operations:
+  - "push directly to main branch"
+  - "modify DNS records"
+  - "access Hermes-ACC or hermes-agents"
+  - "handle payment or credential data"

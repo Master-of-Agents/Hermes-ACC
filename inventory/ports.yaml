@@ -1,0 +1,24 @@
+---
+schema_version: "1.0"
+# Host-level port inventory. Update whenever a port is opened, closed, or reassigned.
+# UFW rules must match this file — see vps/firewall-ufw.md.
+ports:
+  - host_port: 22
+    protocol: tcp
+    service: ssh
+    owner: "sshd"
+    purpose: "Operator SSH access to hermesctl"
+    firewall_rule: "ufw allow 22/tcp"
+    status: active
+
+  - host_port: 32768
+    protocol: tcp
+    service: hermes-agent
+    owner: "hermes-agent-m5gt-hermes-agent-1"
+    container_port: 4860
+    purpose: "Hermes agent API / Telegram webhook relay"
+    firewall_rule: "ufw allow 32768/tcp"
+    status: active
+    notes: |
+      Mapped from container port 4860. Variable: HERMES_PORT_HOST.
+      If Telegram uses webhooks, this port must be reachable from Telegram servers.

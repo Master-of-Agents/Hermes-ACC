@@ -1,0 +1,36 @@
+---
+schema_version: "1.0"
+# Master registry of all AI agents. Each entry points to its manifest file.
+# Update this file whenever an agent is added, retired, or changes status.
+agents:
+  - id: hermes-founding-agent
+    manifest: agents/hermes-founding-agent.yaml
+    status: active
+    platform: hermes-runtime
+    risk_level: medium
+    owner: primary-admin
+    summary: "Primary Hermes agent — Telegram interface, first live agent"
+
+  - id: technical-setup-agent
+    manifest: agents/technical-setup-agent.yaml
+    status: planned
+    platform: claude-code
+    risk_level: high
+    owner: primary-admin
+    summary: "Specialist for VPS/Docker/Hermes bootstrap and recovery operations"
+
+  - id: recruiting-operations-agent
+    manifest: agents/recruiting-operations-agent.yaml
+    status: planned
+    platform: hermes-runtime
+    risk_level: low
+    owner: primary-admin
+    summary: "Specialist for recruiting/HR outreach and candidate tracking"
+
+  - id: website-builder-agent
+    manifest: agents/website-builder-agent.yaml
+    status: planned
+    platform: claude-code
+    risk_level: low
+    owner: primary-admin
+    summary: "Specialist for building and maintaining the public website"

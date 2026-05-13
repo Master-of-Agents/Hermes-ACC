@@ -1,0 +1,64 @@
+---
+schema_version: "1.0"
+name: technical-setup-agent
+role: "Specialist agent for VPS / Docker / Hermes bootstrap and recovery"
+purpose: |
+  Executes bootstrap, deploy, restore, and credential rotation runbooks under
+  explicit operator confirmation. Reads inventory YAML as the authoritative source;
+  never invents facts or credentials. High-risk agent — all destructive ops blocked
+  without operator OK.
+platform: claude-code
+repository_ownership:
+  hermes_acc:
+    - "this manifest (metadata, permissions, runbook references)"
+    - "allowed/forbidden operation policy"
+  hermes_agents:
+    - "agent prompt text"
+    - "skill packs"
+container_or_profile: "n/a (workstation tool)"
+tools_enabled:
+  - bash
+  - edit
+  - read
+  - grep
+  - glob
+permissions:
+  filesystem:
+    - "Hermes-ACC repo: rw on feature branches, ro on main"
+    - "VPS via SSH: rw under hermesctl, with sudo for system ops"
+  network:
+    - "github.com"
+    - "registry.hub.docker.com"
+    - "ghcr.io"
+  destructive_ops_require_confirmation: true
+credentials_required:
+  - GITHUB_INTEGRATION
+  - VPS_SSH_LOGIN_KEY
+  - AGE_IDENTITY_PRIVATE_PRIMARY
+communication_channels:
+  - "operator-direct"
+memory_location: "n/a"
+runtime_location: "operator workstation"
+run_command: "claude-code in Hermes-ACC repo root"
+deployment_method: manual
+backup_requirements:
+  paths: []
+  frequency: none
+recovery_procedure: "runbooks/add-new-agent.md"
+owner: primary-admin
+current_status: planned
+dependencies:
+  - hermes-founding-agent
+risk_level: high
+allowed_operations:
+  - "run validated scripts with DRY_RUN=1 before live execution"
+  - "open PRs for any non-doc change"
+  - "read and update inventory YAML"
+  - "run healthchecks and post-deploy verification"
+forbidden_operations:
+  - "commit plaintext secrets"
+  - "push --force to any branch"
+  - "rotate credentials without operator confirmation"
+  - "purge containers or volumes without operator confirmation"
+  - "modify firewall rules without operator confirmation"
+  - "run restore scripts over production without operator confirmation"
