@@ -1,0 +1,11 @@
+# Hermes-ACC — Code Owners
+#
+# All changes require review from the primary admin.
+# This file is enforced by GitHub branch protection when
+# "Require review from Code Owners" is enabled.
+#
+# Single-operator repo: @Master-of-Agents is the sole reviewer.
+# Branch protection is set with 0 required approvals so the operator
+# can merge their own PRs; CODEOWNERS provides the audit-trail mapping.
+
+* @Master-of-Agents
