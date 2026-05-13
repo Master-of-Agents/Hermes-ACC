@@ -45,26 +45,25 @@ chmod 600 /home/hermesctl/.ssh/authorized_keys
 
 ## Step 4: Place the GitHub deploy key
 
+The deploy key (ed25519 private key, generated separately — see `vps/ssh-access-model.md`)
+must be placed on the VPS. Preferred method: copy directly from the operator workstation.
+
 ```bash
-# Place the private deploy key for Hermes-ACC (from operator workstation or password manager)
-install -d -m 0700 -o hermesctl -g hermesctl /home/hermesctl/.ssh
+# From operator workstation — copy the key file directly:
+scp ~/.ssh/id_ed25519_hermes_acc hermesctl@76.13.145.144:/home/hermesctl/.ssh/id_ed25519_hermes_acc
+ssh hermesctl@76.13.145.144 'chmod 600 ~/.ssh/id_ed25519_hermes_acc'
 
-cat > /home/hermesctl/.ssh/id_ed25519_hermes_acc << 'DEPLOYKEY'
------BEGIN OPENSSH PRIVATE KEY-----
-REPLACE_WITH_DEPLOY_KEY_CONTENT
------END OPENSSH PRIVATE KEY-----
-DEPLOYKEY
-
-chown hermesctl:hermesctl /home/hermesctl/.ssh/id_ed25519_hermes_acc
-chmod 600 /home/hermesctl/.ssh/id_ed25519_hermes_acc
-
-# Configure SSH to use this key for GitHub
+# Configure SSH to use this key for GitHub (run on VPS as hermesctl):
 cat >> /home/hermesctl/.ssh/config << 'SSHCONFIG'
 Host github.com
   IdentityFile ~/.ssh/id_ed25519_hermes_acc
   StrictHostKeyChecking accept-new
 SSHCONFIG
 ```
+
+If `scp` is not available, use the Hostinger web console to paste the key content
+into `/home/hermesctl/.ssh/id_ed25519_hermes_acc` using `nano`, then `chmod 600` it.
+The key is a standard OpenSSH private key file (ed25519 format).
 
 ## Step 5: Harden SSH
 

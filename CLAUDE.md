@@ -45,7 +45,8 @@ credentials metadata, deployment scripts, and operational runbooks.
 
 ### Destructive operations
 
-14. Always run with `DRY_RUN=1` first. Every script in `scripts/` supports this flag.
+14. Always run with `DRY_RUN=1` first. Every write/deploy/restore script supports this flag.
+    Read-only scripts (`healthcheck.sh`, `validate-repo.sh`) are safe to run directly.
 15. STOP and ask before:
     - Purging containers or deleting volumes
     - Rotating or revoking credentials
@@ -80,7 +81,7 @@ hermes/       ← Hermes runtime documentation
 credentials/  ← Credential metadata (no raw secrets)
 secrets/      ← sops-encrypted files + bootstrap guide
 templates/    ← Placeholder templates
-scripts/      ← Shell scripts (all support DRY_RUN=1)
+scripts/      ← Shell scripts (write/deploy scripts support DRY_RUN=1)
 runbooks/     ← Step-by-step procedures
 checks/       ← Verification procedures
 schemas/      ← JSON Schema for YAML validation
