@@ -27,7 +27,7 @@ if [[ "$DRY_RUN" == "1" ]]; then
   exit 0
 fi
 
-install -d -m 0700 "$(dirname "$DEST")"
+sudo install -d -m 0700 -o "$(id -un)" -g "$(id -gn)" "$(dirname "$DEST")"
 umask 077
 sops --decrypt --output-type dotenv "$SOPS_FILE" > "$DEST"
 chmod 600 "$DEST"
