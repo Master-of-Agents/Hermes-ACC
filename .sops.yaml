@@ -8,4 +8,4 @@ creation_rules:
     encrypted_regex: '^(.*_KEY|.*_TOKEN|.*_PASSWORD|.*_SECRET|.*_B64|data)$'
     age: >-
       age1wm97dzvzx4aswpwdjvjyqsggxdvhjsxclvwa2km8yhs9kjrkxghqs243cn,
-      age1REPLACE_WITH_OFFLINE_RECOVERY_PUBLIC_KEY
+      age1dqtxqn44crj9uhzyy8xvsdc7ug6x78jwxdw56l0ry7sua3zd03rsqx5s8n
