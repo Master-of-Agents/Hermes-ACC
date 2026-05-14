@@ -73,6 +73,91 @@ Wait ~60 seconds, then send a Telegram message. The bot should respond
 without any manual intervention. This confirms the systemd boot chain
 works end to end.
 
+## Step 5 — Set up hourly state backup (recommended for any agent you intend to keep)
+
+Without this, the agent's identity (`SOUL.md`, skills, memory, scheduled
+crons, state.db) lives only in the VPS's Docker volume. If the volume is
+lost or corrupted, the agent has to be rebuilt from scratch via the wizard.
+
+The backup pipeline pushes a snapshot to a per-agent GitHub repo every
+hour. Restore is a single `docker cp` per item (see
+`runbooks/new-vps-from-zero.md` Phase 5.5).
+
+### 5a. Pick the agent name
+
+Used in repo and key names. Lowercase, no spaces. For the founding
+agent this is `atlatus`.
+
+```bash
+AGENT_NAME=atlatus   # change for each agent
+GITHUB_ORG=Master-of-Agents
+```
+
+### 5b. Create the state repo on GitHub
+
+1. Go to https://github.com/organizations/${GITHUB_ORG}/repositories/new
+2. Repository name: `hermes-state-${AGENT_NAME}`
+3. **Private**
+4. ✅ Initialize with a README (gives the repo a default branch)
+5. Create
+
+### 5c. Generate the write-enabled deploy key on the VPS
+
+```bash
+ssh-keygen -t ed25519 \
+  -f ~/.ssh/id_ed25519_hermes_state_${AGENT_NAME} \
+  -N "" \
+  -C "${AGENT_NAME}-state-backup-$(hostname -s)"
+chmod 600 ~/.ssh/id_ed25519_hermes_state_${AGENT_NAME}
+cat ~/.ssh/id_ed25519_hermes_state_${AGENT_NAME}.pub
+ssh-keygen -lf ~/.ssh/id_ed25519_hermes_state_${AGENT_NAME}.pub
+```
+
+Copy the public key (the `ssh-ed25519 …` line). Record the fingerprint
+in `credentials/credential-registry.yaml` (`GITHUB_STATE_BACKUP_KEY_*`).
+
+### 5d. Register the public key on the new repo
+
+1. On the new repo: **Settings → Deploy keys → Add deploy key**
+2. Title: `<hostname> backup writer`
+3. Key: paste the public key
+4. ✅ **Check "Allow write access"** — required to push backups
+5. Add key
+
+### 5e. Install the timer
+
+```bash
+AGENT_NAME=${AGENT_NAME} GITHUB_ORG=${GITHUB_ORG} \
+  bash ~/Hermes-ACC/scripts/install-backup-timer.sh
+```
+
+This:
+- Adds an SSH host alias for the backup key in `~/.ssh/config`
+- Clones the state repo to `~/hermes-state-${AGENT_NAME}`
+- Installs `hermes-backup-${AGENT_NAME}.service` + `.timer`
+- Enables and starts the timer (hourly, persistent, 120s jitter)
+
+### 5f. Trigger the first backup and verify
+
+```bash
+sudo systemctl start hermes-backup-${AGENT_NAME}.service
+sudo journalctl -u hermes-backup-${AGENT_NAME}.service -n 20 --no-pager
+```
+
+Expected: "Backup committed and pushed: <timestamp>".
+
+Open the GitHub repo and confirm `SOUL.md`, `skills/`, `cron/`,
+`state.db`, and `config.yaml` are present, and that `api_key:` lines in
+`config.yaml` are `REDACTED`.
+
+### 5g. Confirm the timer is scheduled
+
+```bash
+systemctl list-timers hermes-backup-${AGENT_NAME}.timer --no-pager
+```
+
+Next firing should be within the next hour.
+
 ## Troubleshooting
 
 ### Wizard auto-detects wrong values
