@@ -29,6 +29,10 @@ New entries go at the top.
 - Offsite backup target (deferred to Phase 4)
 - Future secret manager migration (deferred to Phase 5)
 - Image pinning by digest (deferred to Phase 2+)
+- Prompt caching for Hermes agent LLM calls (deferred to Phase 5): mark the agent system
+  prompt block with `cache_control: {type: "ephemeral"}` to cut input token costs ~90%
+  on repeated calls. Anthropic API and OpenAI support this; xAI does not currently.
+  Implement in `hermes-agents` when LLM API keys are configured.
 
 ---
 
