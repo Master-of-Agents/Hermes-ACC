@@ -22,7 +22,7 @@ Requires=docker.service
 Type=simple
 # Wait for the container to be running before exec-ing into it
 ExecStartPre=/bin/sh -c 'until docker inspect -f "{{.State.Running}}" ${CONTAINER_NAME} 2>/dev/null | grep -q true; do sleep 2; done'
-ExecStart=/usr/bin/docker exec ${CONTAINER_NAME} hermes gateway
+ExecStart=/usr/bin/docker exec -u hermes ${CONTAINER_NAME} hermes gateway
 # Restart if the gateway crashes or the container restarts (kills the exec)
 Restart=on-failure
 RestartSec=15
