@@ -13,7 +13,7 @@
 
 | Holder | Type | Fingerprint | Added | Notes |
 |---|---|---|---|---|
-| primary-admin workstation | ed25519 | REPLACE_WITH_FINGERPRINT | REPLACE_WITH_DATE | Main operator key |
+| primary-admin workstation | ed25519 | SHA256:eg8DLsLPs6wsi5rTUUCSFcdv92zpfPWSLVYrN2gOGho | 2026-05-14 | Main operator key |
 
 ## SSH config on the VPS
 
