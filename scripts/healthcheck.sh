@@ -31,14 +31,14 @@ RESTARTING=$(docker inspect --format='{{.State.Restarting}}' "$CONTAINER_NAME" 2
 check "Container not in restart loop" "$([[ "$RESTARTING" == "false" ]] && echo ok || echo "restarting=$RESTARTING")"
 
 # 3. Host port is open
-if nc -z -w3 localhost "$HOST_PORT" 2>/dev/null; then
+if bash -c "echo > /dev/tcp/localhost/$HOST_PORT" 2>/dev/null; then
   check "Host port $HOST_PORT is open" ok
 else
   check "Host port $HOST_PORT is open" "port not responding"
 fi
 
-# 4. Container port responds from inside
-INNER_HEALTH=$(docker exec "$CONTAINER_NAME" sh -c "nc -z -w3 localhost $CONTAINER_PORT && echo ok || echo fail" 2>/dev/null || echo "exec_failed")
+# 4. Container port responds from inside (bash /dev/tcp — nc not available in image)
+INNER_HEALTH=$(docker exec "$CONTAINER_NAME" bash -c "echo > /dev/tcp/localhost/$CONTAINER_PORT && echo ok || echo fail" 2>/dev/null || echo "exec_failed")
 check "Container port $CONTAINER_PORT responds inside container" "$INNER_HEALTH"
 
 echo ""
