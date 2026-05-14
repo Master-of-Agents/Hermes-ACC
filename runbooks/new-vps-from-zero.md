@@ -20,7 +20,7 @@ Before touching the VPS, line up these items so you don't break flow:
 | `Hermes age RECOVERY key` | Fallback if primary key is corrupted |
 | `GitHub` (Master-of-Agents) | Add the deploy key to the repo |
 | `Telegram` (@BotFather) | Recreate the bot only if the old token is gone |
-| `x.AI (Grok API)` | If you need to re-enter the API key in the wizard |
+| `x.AI (Grok API)` | If you need to re-enter the API key in the wizard. **If the wizard fails with `HTTP 400` errors after model selection, generate a fresh xAI API key in the xAI console and use that instead — keys can become tier-restricted or lose access to specific model features over time.** |
 
 Also have ready:
 - Operator workstation SSH key (`~/.ssh/id_ed25519_hermes_vps`) — if you
@@ -148,6 +148,44 @@ Commit the new VPS facts to the repo:
   any keys regenerated during this drill
 
 ---
+
+## Common pitfalls (discovered during the 2026-05-14 drill)
+
+### `HTTP 400` from xAI after wizard
+The LLM provider key may have lost access to its expected feature set
+(reasoning models in particular). **Fix:** generate a fresh xAI API key
+in the xAI console, re-run `hermes setup model`, paste the new key.
+Update sops (`XAI_API_KEY`) once recovery is confirmed.
+
+### Container starts but `/run/hermes/.env` was overwritten
+Every restart of `hermes-gateway.service` re-renders `/run/hermes/.env`
+from sops. Any manual edits to that file are lost. If you need a
+different secret value (e.g. a drill bot token), update sops itself.
+
+### `PermissionError: /opt/data/logs/gateway.log` on first start
+If `hermes setup` runs the gateway interactively before the systemd
+service is installed, it may create the log file as root. Fix:
+```bash
+docker exec hermes-agent chown hermes:hermes /opt/data/logs/gateway.log
+sudo systemctl restart hermes-gateway
+```
+
+### `permission denied while trying to connect to the docker API`
+After bootstrap, hermesctl wasn't in the docker group at the time the
+session started. Fix:
+```bash
+sudo usermod -aG docker hermesctl
+exit  # log out and back in
+```
+Then re-run bootstrap-vps.sh — it's idempotent.
+
+### Drill-specific: production and drill on the same Telegram bot token
+The sops file ships one production `TELEGRAM_BOT_TOKEN`. A drill VPS
+that uses the same sops file will compete with production for Telegram
+updates. Create a separate drill bot via `@BotFather` and either:
+- Override `TELEGRAM_BOT_TOKEN` in `/opt/data/.env` via the wizard
+  (drill agent reads from `/opt/data/.env` after env_file is loaded), or
+- Maintain a separate sops file with the drill token
 
 ## Rollback
 
