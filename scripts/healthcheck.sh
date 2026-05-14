@@ -4,7 +4,7 @@
 # Exit 0 = healthy, Exit 1 = unhealthy.
 set -euo pipefail
 
-CONTAINER_NAME="${HERMES_CONTAINER_NAME:-hermes-agent-m5gt-hermes-agent-1}"
+CONTAINER_NAME="${HERMES_CONTAINER_NAME:-hermes-agent}"
 HOST_PORT="${HERMES_PORT_HOST:-32768}"
 CONTAINER_PORT="${HERMES_PORT_CONTAINER:-4860}"
 
