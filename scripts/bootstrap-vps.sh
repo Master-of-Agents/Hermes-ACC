@@ -34,7 +34,9 @@ fi
 # --- Docker ---
 echo "[2/7] Installing Docker..."
 run bash "${REPO_DIR}/scripts/install-docker.sh"
-newgrp docker 2>/dev/null || true
+# newgrp is intentionally omitted: it hangs in a non-interactive script context.
+# hermesctl must already be in the docker group before running this script
+# (ensured by break-glass Step 2). A new login session picks up group membership.
 
 # --- sops + age ---
 echo "[3/7] Installing sops + age..."
