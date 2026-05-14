@@ -9,7 +9,7 @@ servers:
     public_ip: 76.13.145.144
     admin_user: hermesctl
     ssh_port: 22
-    os: "Ubuntu 22.04 LTS"  # assumption — confirm at bootstrap
+    os: "Ubuntu 24.04.4 LTS"  # confirmed at bootstrap 2026-05-14
     arch: x86_64
     timezone: UTC
     sudo_model: "passwordless for hermesctl (MVP — revisit if second user added)"
