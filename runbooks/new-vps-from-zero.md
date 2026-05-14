@@ -97,6 +97,48 @@ step 6 of bootstrap).
 
 At the end, when prompted `Launch hermes chat now? [Y/n]:` answer **`n`**.
 
+## Phase 5.5 — Restore agent identity (skip for first-ever agent)
+
+If you are recovering an EXISTING agent that already has a state backup
+repo (e.g. `Master-of-Agents/hermes-state-atlatus`), restore its
+identity-defining state before installing the gateway service.
+
+**Skip this phase if you are bootstrapping a brand-new agent that has
+never had a backup.** The wizard's defaults are then the right starting
+state.
+
+1. Generate a fresh backup deploy key for this VPS (write access):
+   ```bash
+   AGENT_NAME=atlatus  # or whichever agent you are restoring
+   ssh-keygen -t ed25519 \
+     -f ~/.ssh/id_ed25519_hermes_state_${AGENT_NAME} \
+     -N "" \
+     -C "${AGENT_NAME}-state-backup-$(hostname -s)"
+   chmod 600 ~/.ssh/id_ed25519_hermes_state_${AGENT_NAME}
+   cat ~/.ssh/id_ed25519_hermes_state_${AGENT_NAME}.pub
+   ```
+2. Register the public key in the agent's state repo
+   (`Master-of-Agents/hermes-state-${AGENT_NAME}` → Settings → Deploy
+   keys → Add). **Check "Allow write access".**
+3. Provision the backup pipeline (clones the state repo, installs the
+   hourly systemd timer):
+   ```bash
+   AGENT_NAME=atlatus GITHUB_ORG=Master-of-Agents \
+     bash ~/Hermes-ACC/scripts/install-backup-timer.sh
+   ```
+4. Restore the agent's data into the container's volume:
+   ```bash
+   STATE_DIR="$HOME/hermes-state-${AGENT_NAME}"
+   for ITEM in SOUL.md skills cron state.db; do
+     [[ -e "${STATE_DIR}/${ITEM}" ]] && \
+       docker cp "${STATE_DIR}/${ITEM}" "hermes-agent:/opt/data/${ITEM}"
+   done
+   docker exec hermes-agent chown -R hermes:hermes /opt/data
+   ```
+   Note: `config.yaml` in the backup is sanitized (API keys redacted),
+   so it is NOT restored from backup. The wizard you just ran in Phase
+   5 sets the live config including API keys.
+
 ## Phase 6 — Install the gateway systemd service
 
 Re-run the bootstrap (step 8 will now detect the wizard config and
