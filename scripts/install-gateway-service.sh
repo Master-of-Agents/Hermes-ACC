@@ -41,8 +41,10 @@ ExecStartPre=/usr/bin/docker compose -f ${COMPOSE_FILE} up -d
 # 3. Wait for the container to be in Running state
 ExecStartPre=/bin/sh -c 'until docker inspect -f "{{.State.Running}}" ${CONTAINER_NAME} 2>/dev/null | grep -q true; do sleep 2; done'
 
-# 4. Run the gateway as the hermes user inside the container
-ExecStart=/usr/bin/docker exec -u hermes ${CONTAINER_NAME} hermes gateway
+# 4. Run the gateway as the hermes user inside the container.
+# --replace ensures we take over any pre-existing gateway instance (manual or
+# stale from a previous service incarnation).
+ExecStart=/usr/bin/docker exec -u hermes ${CONTAINER_NAME} hermes gateway run --replace
 
 # Restart the gateway (and pre-steps) on failure or container restart
 Restart=on-failure
