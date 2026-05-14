@@ -7,7 +7,7 @@ Run after every deploy, restore, or VPS bootstrap.
 ### Container health
 - [ ] `bash scripts/healthcheck.sh` exits 0
 - [ ] `docker ps` shows container in "Up" state, not "Restarting"
-- [ ] No error spikes in `docker logs --tail=20 hermes-agent-m5gt-hermes-agent-1`
+- [ ] No error spikes in `docker logs --tail=20 hermes-agent`
 
 ### Telegram gateway
 - [ ] Send `/ping` from Telegram home chat (`8615165545`) — agent responds

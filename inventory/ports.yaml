@@ -14,7 +14,7 @@ ports:
   - host_port: 32768
     protocol: tcp
     service: hermes-agent
-    owner: "hermes-agent-m5gt-hermes-agent-1"
+    owner: "hermes-agent"
     container_port: 4860
     purpose: "Hermes agent API / Telegram webhook relay"
     firewall_rule: "ufw allow 32768/tcp"

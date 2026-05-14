@@ -4,7 +4,7 @@ schema_version: "1.0"
 # Update after every container change (image pull, rename, port change, volume change).
 containers:
   - id: hermes-agent
-    name: hermes-agent-m5gt-hermes-agent-1
+    name: hermes-agent
     image: ghcr.io/hostinger/hvps-hermes-agent:latest
     image_previous: null  # set to previous tag before upgrades for rollback reference
     host: srv1663264
@@ -40,6 +40,4 @@ containers:
     compose_file: "docker/docker-compose.hermes.yml"
     owner: primary-admin
     status: active
-    migration_note: |
-      Container was originally started ad-hoc by Hostinger provisioning.
-      Migrate to docker-compose.hermes.yml per runbooks/rebuild-corrupted-container.md Phase 2.
+    notes: "Migrated from Hostinger ad-hoc container (hermes-agent-m5gt-hermes-agent-1) to managed docker-compose on 2026-05-14."
