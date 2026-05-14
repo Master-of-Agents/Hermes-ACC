@@ -18,7 +18,7 @@ services:
     volumes:
       - hermes_data:/opt/data
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost ${HERMES_PORT_CONTAINER:-4860} || exit 1"]
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/${HERMES_PORT_CONTAINER:-4860}' 2>/dev/null || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
