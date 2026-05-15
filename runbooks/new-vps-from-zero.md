@@ -146,6 +146,13 @@ identity-defining state before installing the gateway service.
 never had a backup.** The wizard's defaults are then the right starting
 state.
 
+> **Drill variant:** if you are running this on a drill VPS (not
+> replacing production), generate a **read-only** deploy key instead of
+> write-enabled, and **do NOT run `install-backup-timer.sh`**. Otherwise
+> the drill VPS will push its own state over production's backups and
+> corrupt the timeline. After validating, delete the deploy key from the
+> state repo.
+
 1. Generate a fresh backup deploy key for this VPS (write access):
    ```bash
    AGENT_NAME=atlatus  # or whichever agent you are restoring
