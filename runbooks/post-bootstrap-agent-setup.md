@@ -4,7 +4,7 @@ This runbook covers everything between `bootstrap-vps.sh` finishing and
 the Telegram bot being live as a managed service.
 
 **When to run:** after a fresh VPS bootstrap, after replacing the
-`hermes_data` Docker volume, or after a from-scratch disaster recovery.
+`data-atlatus` Docker volume, or after a from-scratch disaster recovery.
 
 **When NOT to run:** during day-to-day operation. The systemd service
 handles container restart and gateway recovery automatically.
@@ -14,13 +14,13 @@ handles container restart and gateway recovery automatically.
 ## Prerequisites
 
 - `scripts/bootstrap-vps.sh` has completed successfully
-- The `hermes-agent` container is running (verify with `docker ps`)
+- The `atlatus` container is running (verify with `docker ps`)
 - You can reach the VPS over SSH as `hermesctl`
 
 ## Step 1 — Run the Hermes setup wizard
 
 The agent image ships with a first-run wizard that writes configuration
-to the `hermes_data` volume. It is interactive and runs via the ttyd web
+to the `data-atlatus` volume. It is interactive and runs via the ttyd web
 terminal — you cannot script it.
 
 1. Open `http://<VPS_IP>:32768` in a browser
@@ -31,7 +31,7 @@ terminal — you cannot script it.
 5. At the end, when asked `Launch hermes chat now? [Y/n]:` answer **`n`**
 
 The wizard saves `/opt/data/config.yaml` and `/opt/data/.env` to the
-`hermes_data` volume.
+`data-atlatus` volume.
 
 ## Step 2 — Install the gateway systemd service
 
@@ -45,7 +45,7 @@ sudo bash ~/Hermes-ACC/scripts/install-gateway-service.sh
 The service is enabled (auto-starts on boot) and started immediately.
 It performs four pre-start steps on every start:
 
-1. Renders `/run/hermes/.env` from sops
+1. Renders `/run/atlatus/.env` from sops
 2. Brings up the container via `docker compose up -d`
 3. Waits for `Running` state
 4. Runs `hermes gateway run --replace` as the `hermes` user
@@ -53,7 +53,7 @@ It performs four pre-start steps on every start:
 ## Step 3 — Verify
 
 ```bash
-sudo systemctl status hermes-gateway
+sudo systemctl status gateway-atlatus
 bash ~/Hermes-ACC/scripts/healthcheck.sh
 ```
 
@@ -96,7 +96,7 @@ GITHUB_ORG=Master-of-Agents
 ### 5b. Create the state repo on GitHub
 
 1. Go to https://github.com/organizations/${GITHUB_ORG}/repositories/new
-2. Repository name: `hermes-state-${AGENT_NAME}`
+2. Repository name: `state-${AGENT_NAME}`
 3. **Private**
 4. ✅ Initialize with a README (gives the repo a default branch)
 5. Create
@@ -105,12 +105,12 @@ GITHUB_ORG=Master-of-Agents
 
 ```bash
 ssh-keygen -t ed25519 \
-  -f ~/.ssh/id_ed25519_hermes_state_${AGENT_NAME} \
+  -f ~/.ssh/id_ed25519_state_${AGENT_NAME} \
   -N "" \
   -C "${AGENT_NAME}-state-backup-$(hostname -s)"
-chmod 600 ~/.ssh/id_ed25519_hermes_state_${AGENT_NAME}
-cat ~/.ssh/id_ed25519_hermes_state_${AGENT_NAME}.pub
-ssh-keygen -lf ~/.ssh/id_ed25519_hermes_state_${AGENT_NAME}.pub
+chmod 600 ~/.ssh/id_ed25519_state_${AGENT_NAME}
+cat ~/.ssh/id_ed25519_state_${AGENT_NAME}.pub
+ssh-keygen -lf ~/.ssh/id_ed25519_state_${AGENT_NAME}.pub
 ```
 
 Copy the public key (the `ssh-ed25519 …` line). Record the fingerprint
@@ -133,15 +133,15 @@ AGENT_NAME=${AGENT_NAME} GITHUB_ORG=${GITHUB_ORG} \
 
 This:
 - Adds an SSH host alias for the backup key in `~/.ssh/config`
-- Clones the state repo to `~/hermes-state-${AGENT_NAME}`
-- Installs `hermes-backup-${AGENT_NAME}.service` + `.timer`
+- Clones the state repo to `~/state-${AGENT_NAME}`
+- Installs `backup-${AGENT_NAME}.service` + `.timer`
 - Enables and starts the timer (hourly, persistent, 120s jitter)
 
 ### 5f. Trigger the first backup and verify
 
 ```bash
-sudo systemctl start hermes-backup-${AGENT_NAME}.service
-sudo journalctl -u hermes-backup-${AGENT_NAME}.service -n 20 --no-pager
+sudo systemctl start backup-${AGENT_NAME}.service
+sudo journalctl -u backup-${AGENT_NAME}.service -n 20 --no-pager
 ```
 
 Expected: "Backup committed and pushed: <timestamp>".
@@ -153,7 +153,7 @@ Open the GitHub repo and confirm `SOUL.md`, `skills/`, `cron/`,
 ### 5g. Confirm the timer is scheduled
 
 ```bash
-systemctl list-timers hermes-backup-${AGENT_NAME}.timer --no-pager
+systemctl list-timers backup-${AGENT_NAME}.timer --no-pager
 ```
 
 Next firing should be within the next hour.
@@ -165,14 +165,14 @@ Next firing should be within the next hour.
 Edit `/opt/data/config.yaml` directly inside the container:
 
 ```bash
-docker exec -u hermes -it hermes-agent nano /opt/data/config.yaml
+docker exec -u hermes -it atlatus nano /opt/data/config.yaml
 ```
 
 Or re-run a specific section of the wizard:
 
 ```bash
-docker exec -u hermes -it hermes-agent hermes setup model
-docker exec -u hermes -it hermes-agent hermes setup gateway
+docker exec -u hermes -it atlatus hermes setup model
+docker exec -u hermes -it atlatus hermes setup gateway
 ```
 
 ### Gateway service fails with "already running"
@@ -182,14 +182,14 @@ start or stale state). The service uses `--replace` to take over
 automatically — if it still fails, kill the inner process:
 
 ```bash
-docker exec hermes-agent pkill -f "hermes gateway"
-sudo systemctl restart hermes-gateway
+docker exec atlatus pkill -f "hermes gateway"
+sudo systemctl restart gateway-atlatus
 ```
 
 ### Bot doesn't respond after a reboot
 
 ```bash
-sudo journalctl -u hermes-gateway -n 50 --no-pager
+sudo journalctl -u gateway-atlatus -n 50 --no-pager
 ```
 
 Common causes:

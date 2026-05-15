@@ -1,0 +1,111 @@
+---
+schema_version: "1.0"
+# Single source of truth for every Hermes agent.
+#
+# Every script and runbook that operates on "an agent" reads this file
+# first. When a script needs a value (VPS host, container name, port,
+# state repo, …) it looks it up here rather than recomputing it.
+#
+# Naming convention: docs/naming-conventions.md
+#
+# Update flow when adding/removing/migrating an agent:
+#   1. Update this file (single commit).
+#   2. Scripts read from it on next invocation — no other config to keep
+#      in sync.
+#
+# Port allocation strategy: each agent's container exposes port 4860
+# internally; the host-side port is allocated here sequentially starting
+# at 32768. Never reuse a freed port for ~30 days to allow firewalled
+# environments to age out cached connections.
+
+agents:
+  - name: atlatus
+    role: orchestrator                     # orchestrator | specialist
+    description: |
+      The founding agent. End-user-facing via Telegram. Receives all
+      operator instructions, plans, delegates to specialists, owns the
+      result and reports back. Eventually moves to a dedicated VPS;
+      today shares one with specialists.
+    vps: srv1663264                        # → inventory/servers.yaml
+    container: atlatus                     # docker container_name
+    volume: data-atlatus                   # docker volume name
+    image: ghcr.io/hostinger/hvps-hermes-agent:latest
+    compose_file: docker/docker-compose.atlatus.yml
+    sops_file: secrets/atlatus.env.enc.yaml
+    env_runtime_path: /run/atlatus/.env
+    state_repo: Master-of-Agents/state-atlatus
+    state_repo_local_path: /home/hermesctl/state-atlatus
+    state_deploy_key:
+      registry_entry: GITHUB_STATE_BACKUP_KEY_ATLATUS
+      path_on_vps: /home/hermesctl/.ssh/id_ed25519_state_atlatus
+    systemd_units:
+      gateway: gateway-atlatus.service
+      backup_service: backup-atlatus.service
+      backup_timer: backup-atlatus.timer
+    ports:
+      - host: 32768
+        container: 4860
+        protocol: tcp
+        purpose: "ttyd web terminal / agent API"
+    telegram:
+      bot_display_name: Atlatus
+      bot_username: "@uet_atlatus_bot"
+      home_chat_id: "8615165545"
+      allowed_user_ids: ["8615165545"]
+    mcp_endpoint: null                     # orchestrator does not expose MCP today
+    delegates_to: []                       # filled in as specialists arrive
+    capabilities:
+      - chat
+      - terminal
+      - vision
+      - browser
+      - task-planning
+    llm:
+      provider: xai
+      model: grok-3-mini
+      api_key_secret: secrets/atlatus.env.enc.yaml#XAI_API_KEY
+    status: active
+    created: "2026-05-13"
+
+# Example template for the next specialist (commented out — uncomment + fill
+# when actually provisioned):
+#
+#  - name: correspondence
+#    role: specialist
+#    description: "Reads email + scanned letters, drafts replies in chosen tone, generates layouts."
+#    vps: srv1663264                       # initially co-located with atlatus
+#    container: correspondence
+#    volume: data-correspondence
+#    image: ghcr.io/hostinger/hvps-hermes-agent:latest
+#    compose_file: docker/docker-compose.correspondence.yml
+#    sops_file: secrets/correspondence.env.enc.yaml
+#    env_runtime_path: /run/correspondence/.env
+#    state_repo: Master-of-Agents/state-correspondence
+#    state_repo_local_path: /home/hermesctl/state-correspondence
+#    state_deploy_key:
+#      registry_entry: GITHUB_STATE_BACKUP_KEY_CORRESPONDENCE
+#      path_on_vps: /home/hermesctl/.ssh/id_ed25519_state_correspondence
+#    systemd_units:
+#      gateway: gateway-correspondence.service
+#      backup_service: backup-correspondence.service
+#      backup_timer: backup-correspondence.timer
+#    ports:
+#      - host: 32769
+#        container: 4860
+#        protocol: tcp
+#        purpose: "MCP endpoint reachable from atlatus on same docker network"
+#    telegram: null                        # specialists do not talk to users directly
+#    mcp_endpoint: "http://correspondence:4860/mcp"
+#    delegates_to: []
+#    capabilities:
+#      - email-read
+#      - email-draft
+#      - letter-scan-ocr
+#      - tone-adjust
+#      - layout-generate
+#    llm:
+#      provider: xai
+#      model: grok-3-mini
+#      api_key_secret: secrets/correspondence.env.enc.yaml#XAI_API_KEY
+#    status: planned
+#    created: null

@@ -43,15 +43,15 @@ bash scripts/bootstrap-vps.sh
 
 ```bash
 # Transfer latest backup to new VPS:
-scp /var/backups/hermes/hermes-<old-host>-hermes_data-<TS>.tar.age \
+scp /var/backups/hermes/hermes-<old-host>-data-atlatus-<TS>.tar.age \
     hermesctl@NEW_VPS_HOST:/tmp/
 
 # Stop container (bootstrap may have started it):
-docker compose -f docker/docker-compose.hermes.yml down
+docker compose -f docker/docker-compose.atlatus.yml down
 
 # Restore:
 export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt
-bash scripts/restore-hermes.sh /tmp/hermes-<old-host>-hermes_data-<TS>.tar.age
+bash scripts/restore-hermes.sh /tmp/hermes-<old-host>-data-atlatus-<TS>.tar.age
 ```
 
 ## Phase 4 — Verification

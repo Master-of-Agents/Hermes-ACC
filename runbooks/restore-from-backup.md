@@ -1,6 +1,6 @@
 # Runbook: Restore from backup
 
-**Purpose:** Restore the Hermes `hermes_data` volume from an encrypted backup archive.
+**Purpose:** Restore the Hermes `data-atlatus` volume from an encrypted backup archive.
 
 **Preconditions:**
 - Age private key available at `SOPS_AGE_KEY_FILE`
@@ -17,7 +17,7 @@
 ls -lht /var/backups/hermes/
 ```
 
-Naming convention: `hermes-<host>-hermes_data-<YYYYMMDDTHHMMSSZ>.tar.age`
+Naming convention: `hermes-<host>-data-atlatus-<YYYYMMDDTHHMMSSZ>.tar.age`
 
 Choose the latest good backup (or the specific point-in-time you need).
 
@@ -45,7 +45,7 @@ bash scripts/restore-hermes.sh /var/backups/hermes/<backup>.tar.age
 The script will:
 - Stop the container
 - Quarantine the current volume (NOT delete it)
-- Extract the backup into `hermes_data`
+- Extract the backup into `data-atlatus`
 - Start the container
 - Run the healthcheck
 
@@ -63,7 +63,7 @@ Check that agent memory and config are from the expected point in time.
 
 ```bash
 # Only after verifying the restore is working well:
-docker volume rm hermes_data_quarantine_<timestamp>
+docker volume rm data-atlatus_quarantine_<timestamp>
 ```
 
 ---
@@ -84,11 +84,11 @@ docker volume rm hermes_data_quarantine_<timestamp>
 The quarantined volume is the rollback path.
 
 ```bash
-docker compose -f docker/docker-compose.hermes.yml down
+docker compose -f docker/docker-compose.atlatus.yml down
 # Restore from quarantine:
 docker run --rm \
-  -v hermes_data_quarantine_<timestamp>:/src:ro \
-  -v hermes_data:/dst \
+  -v data-atlatus_quarantine_<timestamp>:/src:ro \
+  -v data-atlatus:/dst \
   alpine sh -c "cp -a /src/. /dst/"
-docker compose -f docker/docker-compose.hermes.yml up -d
+docker compose -f docker/docker-compose.atlatus.yml up -d
 ```

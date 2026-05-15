@@ -8,7 +8,7 @@
 
 ## Symptoms
 
-- `sops -d secrets/hermes.env.enc.yaml` fails with "no key that matches any recipient"
+- `sops -d secrets/atlatus.env.enc.yaml` fails with "no key that matches any recipient"
 - Age key file missing or corrupt: `~/.config/sops/age/keys.txt`
 
 ---
@@ -20,7 +20,7 @@ If a second recipient (recovery identity) was added to `secrets/.sops.yaml`:
 ```bash
 # On a secure machine with the offline recovery key:
 export SOPS_AGE_KEY_FILE=/path/to/offline/recovery-keys.txt
-sops -d secrets/hermes.env.enc.yaml   # verify decryption works
+sops -d secrets/atlatus.env.enc.yaml   # verify decryption works
 
 # Generate a new primary identity:
 age-keygen -o ~/.config/sops/age/keys.txt
@@ -29,7 +29,7 @@ chmod 600 ~/.config/sops/age/keys.txt
 
 # Update secrets/.sops.yaml with the new primary public key.
 # Then re-key all encrypted files:
-sops updatekeys secrets/hermes.env.enc.yaml
+sops updatekeys secrets/atlatus.env.enc.yaml
 ```
 
 Commit the updated `.sops.yaml` and `.enc.yaml`. Copy the new `keys.txt` to the VPS.
@@ -57,7 +57,7 @@ Every sops-encrypted secret is permanently unrecoverable.
 2. `age-keygen -o ~/.config/sops/age/keys.txt` — new primary identity
 3. `age-keygen` — new recovery identity, store offline
 4. Update `secrets/.sops.yaml` with new public keys
-5. `sops secrets/hermes.env.enc.yaml` — create fresh with new credentials
+5. `sops secrets/atlatus.env.enc.yaml` — create fresh with new credentials
 6. Commit, deploy, verify
 
 ---

@@ -16,7 +16,7 @@
 ## Step 1 — Diagnose
 
 ```bash
-docker logs --tail=50 hermes-agent-m5gt-hermes-agent-1 | grep -i telegram
+docker logs --tail=50 atlatus | grep -i telegram
 bash scripts/healthcheck.sh
 ```
 
@@ -26,14 +26,14 @@ bash scripts/healthcheck.sh
 
 Restart the container:
 ```bash
-docker compose -f docker/docker-compose.hermes.yml restart
+docker compose -f docker/docker-compose.atlatus.yml restart
 sleep 5
 ```
 
 Send `/ping` from home chat. If no response:
 
 ```bash
-docker logs --tail=20 hermes-agent-m5gt-hermes-agent-1
+docker logs --tail=20 atlatus
 ```
 
 ## Step 3 — Rotate the bot token (planned or emergency)
@@ -50,17 +50,17 @@ Select the Hermes bot. Copy the new token.
 
 ```bash
 export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt
-sops secrets/hermes.env.enc.yaml
+sops secrets/atlatus.env.enc.yaml
 # Update TELEGRAM_BOT_TOKEN value, save
 ```
 
-Commit: `git add secrets/hermes.env.enc.yaml && git commit -m "secops: rotate TELEGRAM_BOT_TOKEN"`
+Commit: `git add secrets/atlatus.env.enc.yaml && git commit -m "secops: rotate TELEGRAM_BOT_TOKEN"`
 
 ### 3c — Redeploy
 
 ```bash
-bash scripts/render-env-from-sops.sh /run/hermes/.env
-bash scripts/deploy-hermes.sh
+bash scripts/render-env-from-sops.sh atlatus /run/atlatus/.env
+bash scripts/deploy-agent.sh atlatus
 ```
 
 ### 3d — Verify
@@ -75,7 +75,7 @@ If unexpected messages are being sent:
 2. Verify unexpected messages stop.
 3. Investigate: check `docker logs`, check if any other system has the token.
 4. Follow steps 3a–3d to issue a new token.
-5. Audit `secrets/hermes.env.enc.yaml` for any other indicators of compromise.
+5. Audit `secrets/atlatus.env.enc.yaml` for any other indicators of compromise.
 
 ---
 

@@ -31,14 +31,14 @@ Note the `required_by` field — these containers/scripts/agents will be affecte
 
 ```bash
 export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt
-sops secrets/hermes.env.enc.yaml
+sops secrets/atlatus.env.enc.yaml
 # Editor opens — update the relevant key value, save
 ```
 
 ### 4. Commit the updated encrypted file
 
 ```bash
-git add secrets/hermes.env.enc.yaml
+git add secrets/atlatus.env.enc.yaml
 git commit -m "secops: rotate <CREDENTIAL_NAME>"
 git push origin main  # or PR branch
 ```
@@ -46,8 +46,8 @@ git push origin main  # or PR branch
 ### 5. Re-render the runtime .env and redeploy
 
 ```bash
-bash scripts/render-env-from-sops.sh /run/hermes/.env
-bash scripts/deploy-hermes.sh
+bash scripts/render-env-from-sops.sh atlatus /run/atlatus/.env
+bash scripts/deploy-agent.sh atlatus
 ```
 
 ### 6. Verify the new credential works

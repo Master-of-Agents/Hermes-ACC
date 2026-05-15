@@ -68,9 +68,11 @@ EXCLUDES=(
   "home"
   "bin"
   ".hermes_history"
+  ".local"                          # user-level cache (uv, pip, etc.)
   # regenerable caches
   "models_dev_cache.json"
   ".skills_prompt_snapshot.json"
+  "cache"
   # large / sensitive
   "sessions"
   # SQLite sidecars — atomic .backup below produces a single consistent file
@@ -80,8 +82,16 @@ EXCLUDES=(
   ".bash_logout"
   ".bashrc"
   ".profile"
-  # lock files
+  ".zshrc"
+  # per-process state — NEVER backup (would resurrect a stale process state on restore)
   "auth.lock"
+  "gateway.lock"
+  "gateway.pid"
+)
+
+# Glob patterns (handled separately from exact-match list)
+EXCLUDE_GLOBS=(
+  "config.yaml.bak.*"               # wizard's own rolling config backups; redundant
 )
 
 is_excluded() {
@@ -89,6 +99,10 @@ is_excluded() {
   local ex
   for ex in "${EXCLUDES[@]}"; do
     [[ "$item" == "$ex" ]] && return 0
+  done
+  for ex in "${EXCLUDE_GLOBS[@]}"; do
+    # shellcheck disable=SC2053  # intentional glob comparison
+    [[ "$item" == $ex ]] && return 0
   done
   return 1
 }

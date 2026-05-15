@@ -143,7 +143,7 @@ Open `http://<new_VPS_IP>:32768` in a browser. The ttyd web terminal
 launches `hermes setup`.
 
 Follow `hermes/wizard-choices.md` for every prompt. The xAI API key
-will be auto-detected from `/run/hermes/.env` (rendered from sops in
+will be auto-detected from `/run/atlatus/.env` (rendered from sops in
 step 6 of bootstrap).
 
 At the end, when prompted `Launch hermes chat now? [Y/n]:` answer **`n`**.
@@ -151,7 +151,7 @@ At the end, when prompted `Launch hermes chat now? [Y/n]:` answer **`n`**.
 ## Phase 6.5 — Restore agent identity (skip for first-ever agent)
 
 If you are recovering an EXISTING agent that already has a state backup
-repo (e.g. `Master-of-Agents/hermes-state-atlatus`), restore its
+repo (e.g. `Master-of-Agents/state-atlatus`), restore its
 identity-defining state before installing the gateway service.
 
 **Skip this phase if you are bootstrapping a brand-new agent that has
@@ -169,14 +169,14 @@ state.
    ```bash
    AGENT_NAME=atlatus  # or whichever agent you are restoring
    ssh-keygen -t ed25519 \
-     -f ~/.ssh/id_ed25519_hermes_state_${AGENT_NAME} \
+     -f ~/.ssh/id_ed25519_state_${AGENT_NAME} \
      -N "" \
      -C "${AGENT_NAME}-state-backup-$(hostname -s)"
-   chmod 600 ~/.ssh/id_ed25519_hermes_state_${AGENT_NAME}
-   cat ~/.ssh/id_ed25519_hermes_state_${AGENT_NAME}.pub
+   chmod 600 ~/.ssh/id_ed25519_state_${AGENT_NAME}
+   cat ~/.ssh/id_ed25519_state_${AGENT_NAME}.pub
    ```
 2. Register the public key in the agent's state repo
-   (`Master-of-Agents/hermes-state-${AGENT_NAME}` → Settings → Deploy
+   (`Master-of-Agents/state-${AGENT_NAME}` → Settings → Deploy
    keys → Add). **Check "Allow write access".**
 3. Provision the backup pipeline (clones the state repo, installs the
    hourly systemd timer):
@@ -207,7 +207,7 @@ state.
    `README.md`).
 
    ```bash
-   STATE_DIR="$HOME/hermes-state-${AGENT_NAME}"
+   STATE_DIR="$HOME/state-${AGENT_NAME}"
 
    # Iterate over everything in the backup repo (denylist: skip only
    # repo housekeeping).
@@ -222,21 +222,21 @@ state.
      if [[ -d "$SRC" ]]; then
        # Directory: wipe destination, recreate, copy contents (avoid
        # docker cp's "copies INTO existing dir" nesting trap)
-       docker exec hermes-agent rm -rf "$DEST"
-       docker exec hermes-agent mkdir -p "$DEST"
-       docker cp "${SRC}/." "hermes-agent:${DEST}/"
+       docker exec atlatus rm -rf "$DEST"
+       docker exec atlatus mkdir -p "$DEST"
+       docker cp "${SRC}/." "atlatus:${DEST}/"
        echo "Restored dir : $ITEM"
      else
        # File: plain overwrite
-       docker cp "$SRC" "hermes-agent:$DEST"
+       docker cp "$SRC" "atlatus:$DEST"
        echo "Restored file: $ITEM"
      fi
    done
 
-   docker exec hermes-agent chown -R hermes:hermes /opt/data
+   docker exec atlatus chown -R hermes:hermes /opt/data
 
    # Full reboot picks up the restored state cleanly.
-   # `systemctl restart hermes-gateway` alone is sometimes insufficient
+   # `systemctl restart gateway-atlatus` alone is sometimes insufficient
    # because in-memory session/cache state in the gateway process can
    # mask the freshly-restored disk state.
    sudo reboot
@@ -244,8 +244,8 @@ state.
 
    After reboot, SSH back in and verify:
    ```bash
-   docker exec hermes-agent cat /opt/data/memories/USER.md
-   sudo systemctl is-active hermes-gateway
+   docker exec atlatus cat /opt/data/memories/USER.md
+   sudo systemctl is-active gateway-atlatus
    ```
 
    Note: `config.yaml` in the backup is sanitized (API keys redacted),
@@ -274,7 +274,7 @@ sudo bash ~/Hermes-ACC/scripts/install-gateway-service.sh
 ## Phase 8 — Verify
 
 ```bash
-sudo systemctl status hermes-gateway
+sudo systemctl status gateway-atlatus
 bash ~/Hermes-ACC/scripts/healthcheck.sh
 sudo ufw status verbose
 ```
@@ -316,8 +316,8 @@ The LLM provider key may have lost access to its expected feature set
 in the xAI console, re-run `hermes setup model`, paste the new key.
 Update sops (`XAI_API_KEY`) once recovery is confirmed.
 
-### Container starts but `/run/hermes/.env` was overwritten
-Every restart of `hermes-gateway.service` re-renders `/run/hermes/.env`
+### Container starts but `/run/atlatus/.env` was overwritten
+Every restart of `gateway-atlatus.service` re-renders `/run/atlatus/.env`
 from sops. Any manual edits to that file are lost. If you need a
 different secret value (e.g. a drill bot token), update sops itself.
 
@@ -325,8 +325,8 @@ different secret value (e.g. a drill bot token), update sops itself.
 If `hermes setup` runs the gateway interactively before the systemd
 service is installed, it may create the log file as root. Fix:
 ```bash
-docker exec hermes-agent chown hermes:hermes /opt/data/logs/gateway.log
-sudo systemctl restart hermes-gateway
+docker exec atlatus chown hermes:hermes /opt/data/logs/gateway.log
+sudo systemctl restart gateway-atlatus
 ```
 
 ### `permission denied while trying to connect to the docker API`
@@ -343,7 +343,7 @@ The `memories/` directory wasn't backed up in early revisions of
 `backup-agent-state.sh`. Pull the latest version of that script on
 production, run a fresh backup, then re-restore on the recovering VPS
 using the Phase 6.5 commands above. Confirm
-`docker exec hermes-agent cat /opt/data/memories/USER.md` shows the
+`docker exec atlatus cat /opt/data/memories/USER.md` shows the
 expected preferences.
 
 ### Restored directory contents are nested instead of merged
@@ -378,7 +378,7 @@ the new one until you cut over.
 Only after Phase 9 passes on the new VPS:
 
 1. Update DNS or Telegram webhook (if used) to point at the new IP.
-2. Stop the old VPS's `hermes-gateway.service` to prevent dual
+2. Stop the old VPS's `gateway-atlatus.service` to prevent dual
    processing of Telegram updates.
 3. Run a final Telegram test against the new VPS.
 4. Decommission the old VPS in the Hostinger panel.

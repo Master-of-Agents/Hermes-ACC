@@ -24,25 +24,25 @@
 
 ```bash
 docker ps -a
-docker logs --tail=50 hermes-agent-m5gt-hermes-agent-1
+docker logs --tail=50 atlatus
 bash scripts/healthcheck.sh || true
 ```
 
 ### 2. Stop the container (do NOT delete the volume)
 
 ```bash
-docker compose -f docker/docker-compose.hermes.yml down
+docker compose -f docker/docker-compose.atlatus.yml down
 # Verify volume still exists:
-docker volume ls | grep hermes_data
+docker volume ls | grep data-atlatus
 ```
 
 ### 3. Try a simple pull-and-restart
 
 ```bash
-docker compose -f docker/docker-compose.hermes.yml pull
+docker compose -f docker/docker-compose.atlatus.yml pull
 export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt
-bash scripts/render-env-from-sops.sh /run/hermes/.env
-bash scripts/deploy-hermes.sh
+bash scripts/render-env-from-sops.sh atlatus /run/atlatus/.env
+bash scripts/deploy-agent.sh atlatus
 ```
 
 Check: `bash scripts/healthcheck.sh`
@@ -51,8 +51,8 @@ Check: `bash scripts/healthcheck.sh`
 
 ```bash
 # Inspect volume contents:
-docker run --rm -v hermes_data:/data:ro alpine ls -la /data
-docker run --rm -v hermes_data:/data:ro alpine cat /data/config.yaml
+docker run --rm -v data-atlatus:/data:ro alpine ls -la /data
+docker run --rm -v data-atlatus:/data:ro alpine cat /data/config.yaml
 ```
 
 If config is corrupt, see `runbooks/broken-hermes-config.md`.
@@ -61,18 +61,18 @@ If config is corrupt, see `runbooks/broken-hermes-config.md`.
 
 ```bash
 # Verify sops can decrypt:
-sops -d secrets/hermes.env.enc.yaml
+sops -d secrets/atlatus.env.enc.yaml
 # Re-render:
-bash scripts/render-env-from-sops.sh /run/hermes/.env
-bash scripts/deploy-hermes.sh
+bash scripts/render-env-from-sops.sh atlatus /run/atlatus/.env
+bash scripts/deploy-agent.sh atlatus
 ```
 
 ### 6. If image is broken — pin to a previous version
 
 ```bash
 # Set a known-good image in environment or inventory:
-HERMES_IMAGE=ghcr.io/hostinger/hvps-hermes-agent:<previous-tag> \
-  docker compose -f docker/docker-compose.hermes.yml up -d
+HERMES_IMAGE=ghcr.io/hostinger/hvps-atlatus:<previous-tag> \
+  docker compose -f docker/docker-compose.atlatus.yml up -d
 ```
 
 Update `inventory/containers.yaml → image_previous` with the broken tag for reference.
