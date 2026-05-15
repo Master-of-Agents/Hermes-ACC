@@ -33,11 +33,50 @@ Also have ready:
 ## Phase 1 — Provision the VPS (Hostinger panel)
 
 1. Order a fresh VPS in the Hostinger panel (Ubuntu 24.04 LTS).
-2. Note the new public IP and hostname.
-3. Upload the operator workstation public key in Hostinger → SSH keys
-   so root SSH works from the start.
+2. Note the new public IP, hostname, and the **root password** Hostinger
+   shows you. Save it to Bitwarden under `Hostinger VPS (root)` — it is
+   your only way in for Phase 2.
 
-## Phase 2 — Break-glass (root → hermesctl)
+**Do NOT pre-upload an SSH key in the Hostinger panel.** A real disaster
+recovery may not give you the option, and the drill loses its value if
+the first 5 minutes are pre-baked. The runbook assumes a clean slate.
+
+## Phase 2 — First access via Hostinger web console (root, password)
+
+Without an SSH key on the box yet, your only entry point is Hostinger's
+browser terminal.
+
+1. Hostinger panel → VPS → your server → click **Terminal** (top right).
+2. A browser tab opens with a login prompt. Log in as `root` with the
+   password from Phase 1.
+3. You are now in a root shell on the VPS, via a browser.
+
+From this web terminal, install your operator SSH public key so you can
+move to a real SSH session for the rest of the runbook:
+
+```bash
+mkdir -p /root/.ssh && chmod 700 /root/.ssh
+cat > /root/.ssh/authorized_keys << 'PUBKEY'
+ssh-ed25519 AAAA<your-operator-pubkey-here>... operator@workstation
+PUBKEY
+chmod 600 /root/.ssh/authorized_keys
+```
+
+The pubkey content is on your workstation at
+`~/.ssh/id_ed25519_hermes_vps.pub` (or the equivalent for whatever
+workstation you're recovering from). Paste the **single line**, replacing
+the placeholder.
+
+Verify from your workstation, in a separate terminal:
+
+```bash
+ssh root@<VPS_IP>
+```
+
+Once that works, **keep the web console open** as a safety net until
+you've completed Phase 5 (you don't want to lock yourself out mid-setup).
+
+## Phase 3 — Break-glass: create hermesctl (root SSH session)
 
 Follow `vps/bootstrap-notes.md` exactly. Summary:
 
@@ -54,7 +93,7 @@ Follow `vps/bootstrap-notes.md` exactly. Summary:
 7. Verify `hermesctl` SSH login works from a second terminal **before**
    closing the root session.
 
-## Phase 3 — Place the age key
+## Phase 4 — Place the age key
 
 The age private key must be on the VPS before bootstrap can render secrets.
 
@@ -69,7 +108,7 @@ nano ~/.config/sops/age/keys.txt
 chmod 600 ~/.config/sops/age/keys.txt
 ```
 
-## Phase 4 — Clone repo and run bootstrap
+## Phase 5 — Clone repo and run bootstrap
 
 ```bash
 git clone git@github.com:Master-of-Agents/Hermes-ACC.git ~/Hermes-ACC
@@ -86,7 +125,7 @@ The script runs all 8 steps. At step 8 it will tell you the gateway
 service is **not yet installed** because the wizard hasn't run — that
 is expected on a fresh VPS.
 
-## Phase 5 — Hermes setup wizard
+## Phase 6 — Hermes setup wizard
 
 Open `http://<new_VPS_IP>:32768` in a browser. The ttyd web terminal
 launches `hermes setup`.
@@ -97,7 +136,7 @@ step 6 of bootstrap).
 
 At the end, when prompted `Launch hermes chat now? [Y/n]:` answer **`n`**.
 
-## Phase 5.5 — Restore agent identity (skip for first-ever agent)
+## Phase 6.5 — Restore agent identity (skip for first-ever agent)
 
 If you are recovering an EXISTING agent that already has a state backup
 repo (e.g. `Master-of-Agents/hermes-state-atlatus`), restore its
@@ -137,9 +176,9 @@ state.
    ```
    Note: `config.yaml` in the backup is sanitized (API keys redacted),
    so it is NOT restored from backup. The wizard you just ran in Phase
-   5 sets the live config including API keys.
+   6 sets the live config including API keys.
 
-## Phase 6 — Install the gateway systemd service
+## Phase 7 — Install the gateway systemd service
 
 Re-run the bootstrap (step 8 will now detect the wizard config and
 install the service):
@@ -154,7 +193,7 @@ Or run the service installer directly:
 sudo bash ~/Hermes-ACC/scripts/install-gateway-service.sh
 ```
 
-## Phase 7 — Verify
+## Phase 8 — Verify
 
 ```bash
 sudo systemctl status hermes-gateway
@@ -169,7 +208,7 @@ Expected:
 
 Send a Telegram message. The bot should respond.
 
-## Phase 8 — Reboot test
+## Phase 9 — Reboot test
 
 ```bash
 sudo reboot
@@ -178,7 +217,7 @@ sudo reboot
 Wait 60 seconds, send another Telegram message. Bot must respond
 without intervention. This proves the systemd boot chain works.
 
-## Phase 9 — Update inventory
+## Phase 10 — Update inventory
 
 Commit the new VPS facts to the repo:
 
@@ -237,7 +276,7 @@ the new one until you cut over.
 
 ## Cutover (if replacing a live VPS)
 
-Only after Phase 8 passes on the new VPS:
+Only after Phase 9 passes on the new VPS:
 
 1. Update DNS or Telegram webhook (if used) to point at the new IP.
 2. Stop the old VPS's `hermes-gateway.service` to prevent dual
