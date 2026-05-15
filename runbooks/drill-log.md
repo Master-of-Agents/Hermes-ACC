@@ -9,6 +9,77 @@ job when it surfaces friction.
 
 ---
 
+## 2026-05-15 — Drill 2: full identity recovery (Atlatus) on clean-slate VPS
+
+**Operator:** primary-admin
+**Drill VPS:** `srv1670888.hstgr.cloud` (`187.127.85.205`), Hostinger KVM 1, freshly reinstalled Ubuntu 24.04.4 LTS
+**Target agent:** Atlatus identity restored to drill bot `@uet_atldrill2_bot`
+**Duration:** ~3 hours (with extensive doc updates between findings)
+**Runbook followed:** `runbooks/new-vps-from-zero.md` post-2026-05-14 revision
+**Outcome:** PASS — drill bot demonstrably inherits Atlatus's learned user preferences (Berlin timezone). Five new findings, all fixed in code or documentation before drill end.
+
+### Phases executed
+
+| Phase | Status |
+|---|---|
+| 1. Provision (OS reinstall, no SSH pre-upload — discipline upgrade vs Drill 1) | ✅ |
+| 2. First access via Hostinger web console, install operator pubkey | ✅ |
+| 3. Break-glass (hermesctl, ssh hardening, fresh GitHub deploy key) | ✅ |
+| 4. Place primary age private key from Bitwarden | ✅ |
+| 5. Clone repo, run `bootstrap-vps.sh` | ✅ (yesterday's docker-group fix held: clean exit 75, idempotent re-run after re-login) |
+| 6. Hermes setup wizard with drill bot token override | ✅ |
+| 6.5 Drill variant: read-only deploy key, restore from `hermes-state-atlatus` | ✅ after fixes #3 and #4 |
+| 7. Install gateway systemd service | ✅ (no gateway.log permission issue — wizard answered `n` cleanly) |
+| 8. Verification | ✅ |
+| 9. Reboot test + restore validation | ✅ — drill bot replied `12:28:40 CEST` from Berlin tz preference |
+
+### Findings
+
+#### Finding 1 — Pre-uploaded SSH key in Phase 1 was a drill-killer shortcut
+**Symptom (philosophical, not technical):** the earlier runbook said to upload the operator pubkey in the Hostinger panel before provisioning, so SSH worked from the start. That hides the realistic clean-slate scenario where no key exists yet.
+**Fix:** rewrote Phase 1 + Phase 2 to enforce web-console-first access, with explicit "do NOT pre-upload an SSH key" discipline note. Phase 2 now walks through installing the operator pubkey from inside the web console.
+**Commit:** `9e17f69`
+
+#### Finding 2 — Wrong SSH key selected when connecting to a non-default VPS
+**Symptom:** `ssh hermesctl@76.13.145.144` from a workstation that had the drill key as default prompted for a password (which doesn't exist) and gave no helpful error.
+**Root cause:** with multiple VPSes, the default SSH key is whichever one the workstation was last set up for. The non-matching VPS rejects it and falls through to password auth, which is disabled — endless prompt.
+**Fix:** updated `vps/ssh-access-model.md` with the per-VPS operator-key mapping and a mandatory `~/.ssh/config` recommendation (`Host ops`, `Host drill`, etc.). Pitfall added to runbook.
+**Commit:** `41b45fb`
+
+#### Finding 3 — Backup script was missing the agent's user-profile memories ⭐
+**Symptom:** drill bot restored from `hermes-state-atlatus` had no memory of Berlin timezone — kept answering in UTC.
+**Root cause:** `backup-agent-state.sh` only copied SOUL.md, skills/, cron/, state.db, config.yaml. It missed `/opt/data/memories/USER.md` (the learned user profile — where timezone, named entities, preferences live) plus `channel_directory.json` and `gateway_state.json`. The agent's "personality memory" was never being backed up.
+**Fix:** added memories/, channel/gateway state to the backup set. Switched state.db copy to atomic SQLite `.backup` so concurrent writes can't produce a torn snapshot.
+**Commit:** `527e222`
+
+#### Finding 4 — `docker cp dir container:dest-dir` nests instead of merges
+**Symptom:** after restoring memories/, the file landed at `/opt/data/memories/memories/USER.md` instead of `/opt/data/memories/USER.md`. Agent couldn't find it.
+**Root cause:** when the destination is an existing directory, `docker cp` copies the source directory INTO it (creating a subdirectory) rather than replacing it. Same bug also nested `skills/` and `cron/` on Drill 1 — silently — masking the depth of the problem.
+**Fix:** Phase 6.5 step 4 in the runbook now uses the `src/.` (contents) syntax with explicit `rm -rf` + `mkdir` of the destination first, with an inline explanation of the trap. Pitfall section in the runbook updated.
+
+#### Finding 5 — `systemctl restart hermes-gateway` after restore is sometimes insufficient
+**Symptom:** even after the files were in the right place, the drill bot kept answering UTC. A `sudo reboot` was required for the agent to actually pick up the new state.
+**Root cause:** in-memory session/cache state in the gateway process can mask freshly-restored disk state. The gateway's prompt-cache TTL is 5 minutes; session idle timeout is 24 hours. A clean container restart bypasses all of that.
+**Fix:** Phase 6.5 step 4 now ends with `sudo reboot` (not `systemctl restart`) to force a clean cycle. Both verification steps run after the reboot.
+
+### What was demonstrably proven
+
+- Bootstrap from clean-slate VPS works end-to-end with no manual fixups required.
+- An agent's full identity (SOUL, skills, learned profile, scheduled jobs, channel mappings, conversation continuity via state.db) survives transplant to a fresh VPS.
+- The `hermes-state-{name}` per-agent backup pattern is fit-for-purpose for personality recovery, not just for bootstrap config.
+
+### Artifacts to clean up after drill
+- [ ] Delete `AtlDrill2` bot in @BotFather
+- [ ] Delete `srv1670888 (drill 2)` deploy key from `Master-of-Agents/Hermes-ACC`
+- [ ] Delete `srv1670888 drill restore (read-only)` deploy key from `Master-of-Agents/hermes-state-atlatus`
+- [ ] Decommission `srv1670888` VPS (or hold for Drill 3)
+- [ ] Rotate the primary age key (partial prefix was accidentally echoed during diagnostics; mathematically still secure but discipline-first)
+
+### Next drill due
+Recommended: within 60 days, or after any major change to the backup or restore paths. Targeted goal: under 60 minutes from "press order" to "bot replies with restored personality."
+
+---
+
 ## 2026-05-14 — Founding agent (Atlatus) recovery drill
 
 **Operator:** primary-admin

@@ -184,23 +184,58 @@ state.
    AGENT_NAME=atlatus GITHUB_ORG=Master-of-Agents \
      bash ~/Hermes-ACC/scripts/install-backup-timer.sh
    ```
-4. Restore the agent's data into the container's volume:
+4. Restore the agent's data into the container's volume.
+
+   **Important `docker cp` quirk:** when the destination is an existing
+   directory in the container, `docker cp src-dir container:dest-dir`
+   copies the *source dir* INTO the destination (creating
+   `dest-dir/src-dir/...`), not the contents. To copy contents into an
+   existing directory, use the `/.` (contents) syntax:
+   `docker cp src-dir/. container:dest-dir/`.
+
+   Files (single files) don't have this issue — they overwrite as
+   expected.
+
+   The block below handles directories with `/.` and files plainly:
+
    ```bash
    STATE_DIR="$HOME/hermes-state-${AGENT_NAME}"
-   for ITEM in \
-       SOUL.md \
-       skills \
-       cron \
-       state.db \
-       memories \
-       channel_directory.json \
-       gateway_state.json; do
-     [[ -e "${STATE_DIR}/${ITEM}" ]] && \
-       docker cp "${STATE_DIR}/${ITEM}" "hermes-agent:/opt/data/${ITEM}"
-   done
+
+   # Wipe existing target dirs so contents copy in cleanly
+   docker exec hermes-agent rm -rf \
+     /opt/data/memories /opt/data/skills /opt/data/cron
+
+   docker exec hermes-agent mkdir -p \
+     /opt/data/memories /opt/data/skills /opt/data/cron
+
+   # Directories — use /. (contents) syntax
+   docker cp "${STATE_DIR}/memories/." hermes-agent:/opt/data/memories/
+   docker cp "${STATE_DIR}/skills/."   hermes-agent:/opt/data/skills/
+   docker cp "${STATE_DIR}/cron/."     hermes-agent:/opt/data/cron/
+
+   # Files — plain overwrite
+   docker cp "${STATE_DIR}/SOUL.md"  hermes-agent:/opt/data/SOUL.md
+   docker cp "${STATE_DIR}/state.db" hermes-agent:/opt/data/state.db
+   [[ -e "${STATE_DIR}/channel_directory.json" ]] && \
+     docker cp "${STATE_DIR}/channel_directory.json" hermes-agent:/opt/data/channel_directory.json
+   [[ -e "${STATE_DIR}/gateway_state.json" ]] && \
+     docker cp "${STATE_DIR}/gateway_state.json" hermes-agent:/opt/data/gateway_state.json
+
    docker exec hermes-agent chown -R hermes:hermes /opt/data
-   sudo systemctl restart hermes-gateway
+
+   # Full container restart picks up the restored state cleanly.
+   # `systemctl restart hermes-gateway` alone is sometimes insufficient
+   # because in-memory session/cache state in the gateway process can
+   # mask the freshly-restored disk state.
+   sudo reboot
    ```
+
+   After reboot, SSH back in and verify:
+   ```bash
+   docker exec hermes-agent cat /opt/data/memories/USER.md
+   sudo systemctl is-active hermes-gateway
+   ```
+
    Note: `config.yaml` in the backup is sanitized (API keys redacted),
    so it is NOT restored from backup. The wizard you just ran in Phase
    6 sets the live config including API keys.
@@ -290,6 +325,21 @@ sudo usermod -aG docker hermesctl
 exit  # log out and back in
 ```
 Then re-run bootstrap-vps.sh — it's idempotent.
+
+### Restored agent has no memory of user preferences (timezone, name, etc.)
+The `memories/` directory wasn't backed up in early revisions of
+`backup-agent-state.sh`. Pull the latest version of that script on
+production, run a fresh backup, then re-restore on the recovering VPS
+using the Phase 6.5 commands above. Confirm
+`docker exec hermes-agent cat /opt/data/memories/USER.md` shows the
+expected preferences.
+
+### Restored directory contents are nested instead of merged
+You ran `docker cp src-dir container:dest-dir` when `dest-dir` already
+existed. Docker copied the source dir INTO the destination, creating
+`dest-dir/src-dir/...`. Fix by using `docker cp src-dir/. container:dest-dir/`
+or by `rm -rf` on the destination first. See Phase 6.5 step 4 for the
+correct block.
 
 ### `ssh hermesctl@<IP>` keeps prompting for a password
 The wrong SSH key is being offered. Each VPS authorizes only its own
