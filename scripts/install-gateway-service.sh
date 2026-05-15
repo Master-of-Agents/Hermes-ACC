@@ -1,28 +1,36 @@
 #!/usr/bin/env bash
-# Install the hermes-gateway systemd service.
+# Install the gateway-<agent-name> systemd service.
 #
 # Service responsibilities (in order, on every start):
-#   1. Render /run/hermes/.env from sops-encrypted secrets
-#   2. Ensure the hermes-agent container is running with current env_file
+#   1. Render /run/<agent-name>/.env from sops-encrypted secrets
+#   2. Ensure the <agent-name> container is running with current env_file
 #   3. Wait for the container to be in Running state
-#   4. Run `hermes gateway` inside the container (as the hermes user)
+#   4. Run `hermes gateway run --replace` inside the container as the
+#      hermes user
 #
 # Idempotent: re-running this script updates the unit file in place.
-# Usage: sudo bash scripts/install-gateway-service.sh
+#
+# Usage:
+#   sudo bash scripts/install-gateway-service.sh <agent-name>
+#   sudo AGENT_NAME=atlatus bash scripts/install-gateway-service.sh
+#
+# Per docs/naming-conventions.md.
 set -euo pipefail
 
-SERVICE_NAME="hermes-gateway"
+AGENT_NAME="${AGENT_NAME:-${1:-atlatus}}"
+SERVICE_NAME="gateway-${AGENT_NAME}"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
-CONTAINER_NAME="${HERMES_CONTAINER_NAME:-hermes-agent}"
+CONTAINER_NAME="${AGENT_NAME}"
 REPO_DIR="${REPO_DIR:-/home/hermesctl/Hermes-ACC}"
 AGE_KEY_FILE="${AGE_KEY_FILE:-/home/hermesctl/.config/sops/age/keys.txt}"
-COMPOSE_FILE="${REPO_DIR}/docker/docker-compose.hermes.yml"
+COMPOSE_FILE="${REPO_DIR}/docker/docker-compose.${AGENT_NAME}.yml"
+ENV_FILE="/run/${AGENT_NAME}/.env"
 
 echo "Installing ${SERVICE_NAME} systemd service..."
 
 cat > "$SERVICE_FILE" << EOF
 [Unit]
-Description=Hermes Telegram Gateway
+Description=Hermes Telegram Gateway (${AGENT_NAME})
 Documentation=https://github.com/Master-of-Agents/Hermes-ACC
 After=docker.service local-fs.target
 Requires=docker.service
@@ -33,7 +41,7 @@ WorkingDirectory=${REPO_DIR}
 Environment="SOPS_AGE_KEY_FILE=${AGE_KEY_FILE}"
 
 # 1. Render the runtime .env from sops (idempotent — overwrites if already present)
-ExecStartPre=/bin/bash ${REPO_DIR}/scripts/render-env-from-sops.sh /run/hermes/.env
+ExecStartPre=/bin/bash ${REPO_DIR}/scripts/render-env-from-sops.sh ${AGENT_NAME} ${ENV_FILE}
 
 # 2. Ensure the container is running with the current env_file
 ExecStartPre=/usr/bin/docker compose -f ${COMPOSE_FILE} up -d
@@ -51,7 +59,7 @@ Restart=on-failure
 RestartSec=15
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=hermes-gateway
+SyslogIdentifier=${SERVICE_NAME}
 
 [Install]
 WantedBy=multi-user.target
@@ -65,7 +73,7 @@ echo ""
 echo "${SERVICE_NAME} service installed, enabled, and started."
 echo ""
 echo "Pre-start steps run automatically:"
-echo "  1. Renders /run/hermes/.env from sops"
+echo "  1. Renders ${ENV_FILE} from sops (secrets/${AGENT_NAME}.env.enc.yaml)"
 echo "  2. Brings up the container via docker compose"
 echo "  3. Waits for container Running state"
 echo "  4. Starts the gateway as the hermes user"

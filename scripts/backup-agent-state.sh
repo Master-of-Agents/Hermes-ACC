@@ -22,8 +22,8 @@
 set -euo pipefail
 
 AGENT_NAME="${AGENT_NAME:-atlatus}"
-CONTAINER_NAME="${CONTAINER_NAME:-hermes-agent}"
-BACKUP_REPO_DIR="${BACKUP_REPO_DIR:-$HOME/hermes-state-${AGENT_NAME}}"
+CONTAINER_NAME="${CONTAINER_NAME:-${AGENT_NAME}}"
+BACKUP_REPO_DIR="${BACKUP_REPO_DIR:-$HOME/state-${AGENT_NAME}}"
 
 log() { echo "[backup-agent-state] $(date -u +%H:%M:%S) $*"; }
 

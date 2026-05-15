@@ -22,12 +22,12 @@ set -euo pipefail
 : "${AGENT_NAME:?AGENT_NAME must be set (e.g. AGENT_NAME=atlatus)}"
 : "${GITHUB_ORG:?GITHUB_ORG must be set (e.g. GITHUB_ORG=Master-of-Agents)}"
 
-REPO_NAME="hermes-state-${AGENT_NAME}"
-STATE_KEY_FILE="${STATE_KEY_FILE:-$HOME/.ssh/id_ed25519_hermes_state_${AGENT_NAME}}"
+REPO_NAME="state-${AGENT_NAME}"
+STATE_KEY_FILE="${STATE_KEY_FILE:-$HOME/.ssh/id_ed25519_state_${AGENT_NAME}}"
 BACKUP_REPO_DIR="${BACKUP_REPO_DIR:-$HOME/${REPO_NAME}}"
 SSH_HOST_ALIAS="github.com-${REPO_NAME}"
 ACC_REPO_DIR="${ACC_REPO_DIR:-$HOME/Hermes-ACC}"
-SERVICE_NAME="hermes-backup-${AGENT_NAME}"
+SERVICE_NAME="backup-${AGENT_NAME}"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 TIMER_FILE="/etc/systemd/system/${SERVICE_NAME}.timer"
 

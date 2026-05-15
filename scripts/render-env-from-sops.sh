@@ -1,13 +1,29 @@
 #!/usr/bin/env bash
-# Decrypt sops-encrypted secrets and render a runtime .env file.
-# Usage: bash scripts/render-env-from-sops.sh [/run/hermes/.env]
-#        DRY_RUN=1 bash scripts/render-env-from-sops.sh   — print actions, write nothing
-# Requires: sops, age key at SOPS_AGE_KEY_FILE
+# Decrypt sops-encrypted secrets for an agent and render a runtime .env file.
+#
+# Usage:
+#   bash scripts/render-env-from-sops.sh <agent-name> [/run/<agent-name>/.env]
+#   DRY_RUN=1 bash scripts/render-env-from-sops.sh <agent-name>
+#
+# Defaults:
+#   <agent-name>  — must be provided (no default — fail fast)
+#   destination   — /run/<agent-name>/.env
+#
+# Reads secrets/<agent-name>.env.enc.yaml (per docs/naming-conventions.md).
+# Requires sops and the age key at SOPS_AGE_KEY_FILE.
 set -euo pipefail
 
 DRY_RUN="${DRY_RUN:-0}"
-DEST="${1:-/run/hermes/.env}"
-SOPS_FILE="secrets/hermes.env.enc.yaml"
+
+AGENT_NAME="${1:-}"
+if [[ -z "$AGENT_NAME" ]]; then
+  echo "ERROR: agent name is required as the first argument." >&2
+  echo "Usage: bash $0 <agent-name> [/run/<agent-name>/.env]" >&2
+  exit 1
+fi
+
+DEST="${2:-/run/${AGENT_NAME}/.env}"
+SOPS_FILE="secrets/${AGENT_NAME}.env.enc.yaml"
 
 : "${SOPS_AGE_KEY_FILE:?SOPS_AGE_KEY_FILE must be set (path to age private key file)}"
 

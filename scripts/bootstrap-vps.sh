@@ -8,6 +8,10 @@ set -euo pipefail
 DRY_RUN="${DRY_RUN:-0}"
 REPO_DIR="${REPO_DIR:-$HOME/Hermes-ACC}"
 HERMES_PORT_HOST="${HERMES_PORT_HOST:-32768}"
+# The agent that this bootstrap brings online. Defaults to the founding
+# agent. For additional agents on the same VPS, run only the agent-scoped
+# steps (deploy + gateway service install) with AGENT_NAME=<other>.
+AGENT_NAME="${AGENT_NAME:-atlatus}"
 
 run() { if [[ "$DRY_RUN" == "1" ]]; then echo "DRY: $*"; else "$@"; fi; }
 
@@ -62,30 +66,30 @@ fi
 echo "Age key found at $AGE_KEY_FILE"
 
 # --- Render .env ---
-echo "[6/7] Rendering runtime .env from sops..."
+echo "[6/8] Rendering runtime .env for '${AGENT_NAME}' from sops..."
 export SOPS_AGE_KEY_FILE="$AGE_KEY_FILE"
-run bash "${REPO_DIR}/scripts/render-env-from-sops.sh" /run/hermes/.env
+run bash "${REPO_DIR}/scripts/render-env-from-sops.sh" "${AGENT_NAME}" "/run/${AGENT_NAME}/.env"
 
 # --- Deploy ---
-echo "[7/8] Deploying Hermes container..."
-run bash "${REPO_DIR}/scripts/deploy-hermes.sh"
+echo "[7/8] Deploying '${AGENT_NAME}' container..."
+run bash "${REPO_DIR}/scripts/deploy-agent.sh" "${AGENT_NAME}"
 
 # --- Gateway service (conditional on Hermes wizard being completed) ---
-echo "[8/8] Checking for Hermes agent config..."
+echo "[8/8] Checking for ${AGENT_NAME} agent config..."
 if [[ "$DRY_RUN" == "1" ]]; then
-  echo "DRY: would check for /opt/data/config.yaml in container and install hermes-gateway.service if present"
-elif docker exec hermes-agent test -f /opt/data/config.yaml 2>/dev/null; then
-  echo "Hermes config detected — installing hermes-gateway systemd service..."
-  sudo bash "${REPO_DIR}/scripts/install-gateway-service.sh"
+  echo "DRY: would check for /opt/data/config.yaml in container '${AGENT_NAME}' and install gateway-${AGENT_NAME}.service if present"
+elif docker exec "${AGENT_NAME}" test -f /opt/data/config.yaml 2>/dev/null; then
+  echo "${AGENT_NAME} config detected — installing gateway-${AGENT_NAME} systemd service..."
+  sudo AGENT_NAME="${AGENT_NAME}" bash "${REPO_DIR}/scripts/install-gateway-service.sh"
 else
   echo ""
-  echo "  Hermes setup wizard has not been run yet."
+  echo "  Hermes setup wizard has not been run yet for '${AGENT_NAME}'."
   echo "  The gateway systemd service will NOT be installed at this point."
   echo ""
   echo "  Next steps:"
   echo "    1. Open http://<VPS_IP>:${HERMES_PORT_HOST} in a browser"
   echo "    2. Complete the wizard (see hermes/wizard-choices.md)"
-  echo "    3. Run: sudo bash ${REPO_DIR}/scripts/install-gateway-service.sh"
+  echo "    3. Run: sudo AGENT_NAME=${AGENT_NAME} bash ${REPO_DIR}/scripts/install-gateway-service.sh"
   echo ""
   echo "  See runbooks/post-bootstrap-agent-setup.md for the full procedure."
 fi
