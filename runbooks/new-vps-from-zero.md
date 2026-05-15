@@ -196,34 +196,46 @@ state.
    Files (single files) don't have this issue — they overwrite as
    expected.
 
-   The block below handles directories with `/.` and files plainly:
+   The block below restores **everything that's in the backup repo**
+   into `/opt/data/`, handling directories with `/.` (contents) syntax
+   and files plainly. This is intentional: as the backup script evolves
+   to capture new state files added by future Hermes versions, the
+   restore loop picks them up automatically — no list to maintain in two
+   places.
+
+   The only items skipped at restore are repo housekeeping (`.git`,
+   `README.md`).
 
    ```bash
    STATE_DIR="$HOME/hermes-state-${AGENT_NAME}"
 
-   # Wipe existing target dirs so contents copy in cleanly
-   docker exec hermes-agent rm -rf \
-     /opt/data/memories /opt/data/skills /opt/data/cron
+   # Iterate over everything in the backup repo (denylist: skip only
+   # repo housekeeping).
+   for ITEM in $(ls -A "$STATE_DIR"); do
+     case "$ITEM" in
+       .git|README.md) continue ;;
+     esac
 
-   docker exec hermes-agent mkdir -p \
-     /opt/data/memories /opt/data/skills /opt/data/cron
+     SRC="${STATE_DIR}/${ITEM}"
+     DEST="/opt/data/${ITEM}"
 
-   # Directories — use /. (contents) syntax
-   docker cp "${STATE_DIR}/memories/." hermes-agent:/opt/data/memories/
-   docker cp "${STATE_DIR}/skills/."   hermes-agent:/opt/data/skills/
-   docker cp "${STATE_DIR}/cron/."     hermes-agent:/opt/data/cron/
-
-   # Files — plain overwrite
-   docker cp "${STATE_DIR}/SOUL.md"  hermes-agent:/opt/data/SOUL.md
-   docker cp "${STATE_DIR}/state.db" hermes-agent:/opt/data/state.db
-   [[ -e "${STATE_DIR}/channel_directory.json" ]] && \
-     docker cp "${STATE_DIR}/channel_directory.json" hermes-agent:/opt/data/channel_directory.json
-   [[ -e "${STATE_DIR}/gateway_state.json" ]] && \
-     docker cp "${STATE_DIR}/gateway_state.json" hermes-agent:/opt/data/gateway_state.json
+     if [[ -d "$SRC" ]]; then
+       # Directory: wipe destination, recreate, copy contents (avoid
+       # docker cp's "copies INTO existing dir" nesting trap)
+       docker exec hermes-agent rm -rf "$DEST"
+       docker exec hermes-agent mkdir -p "$DEST"
+       docker cp "${SRC}/." "hermes-agent:${DEST}/"
+       echo "Restored dir : $ITEM"
+     else
+       # File: plain overwrite
+       docker cp "$SRC" "hermes-agent:$DEST"
+       echo "Restored file: $ITEM"
+     fi
+   done
 
    docker exec hermes-agent chown -R hermes:hermes /opt/data
 
-   # Full container restart picks up the restored state cleanly.
+   # Full reboot picks up the restored state cleanly.
    # `systemctl restart hermes-gateway` alone is sometimes insufficient
    # because in-memory session/cache state in the gateway process can
    # mask the freshly-restored disk state.

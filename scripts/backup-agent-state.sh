@@ -45,9 +45,57 @@ log "Snapshotting agent state for '$AGENT_NAME' from $CONTAINER_NAME..."
 STAGING="$(mktemp -d)"
 trap 'rm -rf "$STAGING"' EXIT
 
-# 1a. SQLite state.db — use the online backup API for an atomic, consistent
-# snapshot even while the gateway is writing. Falls back to plain docker cp
-# if sqlite3 is not available in the container (older image).
+# DENYLIST POLICY (intentional choice):
+# We back up EVERYTHING in /opt/data/ EXCEPT explicitly excluded items.
+# This is a denylist, not an allowlist — so when Hermes adds a new
+# directory, config file, hook, skill format, or any other state file in
+# a future release, it is automatically backed up. The 2026-05-15 drill
+# failed because the previous allowlist silently missed memories/ — we
+# don't want that again.
+#
+# Exclude only items that fall into one of these categories:
+#   - secrets    (already encrypted in sops, must not appear in plaintext repo)
+#   - transient  (regenerated on container start)
+#   - too-large  (sessions/, conversation history — opt-in later)
+#   - sqlite-sidecar (state.db-wal/-shm — handled by atomic .backup)
+EXCLUDES=(
+  # secrets
+  ".env"
+  "auth.json"
+  # transient runtime
+  "logs"
+  "sandboxes"
+  "home"
+  "bin"
+  ".hermes_history"
+  # regenerable caches
+  "models_dev_cache.json"
+  ".skills_prompt_snapshot.json"
+  # large / sensitive
+  "sessions"
+  # SQLite sidecars — atomic .backup below produces a single consistent file
+  "state.db-wal"
+  "state.db-shm"
+  # shell defaults inherited from /etc/skel
+  ".bash_logout"
+  ".bashrc"
+  ".profile"
+  # lock files
+  "auth.lock"
+)
+
+is_excluded() {
+  local item="$1"
+  local ex
+  for ex in "${EXCLUDES[@]}"; do
+    [[ "$item" == "$ex" ]] && return 0
+  done
+  return 1
+}
+
+# 1a. SQLite state.db — atomic snapshot via the online backup API so a
+# concurrent write can't produce a torn copy. Handled specially (not via
+# the generic loop below) because it's the only file where this matters.
 if docker exec "$CONTAINER_NAME" command -v sqlite3 >/dev/null 2>&1; then
   if docker exec "$CONTAINER_NAME" sqlite3 /opt/data/state.db \
        ".backup /tmp/state-snapshot.db" 2>/dev/null; then
@@ -62,29 +110,28 @@ else
   docker cp "${CONTAINER_NAME}:/opt/data/state.db" "${STAGING}/state.db" 2>/dev/null || true
 fi
 
-# 1b. Identity & runtime files (each optional — skip silently if absent).
-# These were missing from earlier revisions of this script and were the
-# root cause of the 2026-05-15 "drill agent has no Berlin timezone memory"
-# finding. USER.md in particular holds the learned user profile.
-for ITEM in \
-    SOUL.md \
-    skills \
-    cron \
-    config.yaml \
-    memories \
-    channel_directory.json \
-    gateway_state.json; do
-  if docker exec "$CONTAINER_NAME" test -e "/opt/data/${ITEM}" 2>/dev/null; then
-    docker cp "${CONTAINER_NAME}:/opt/data/${ITEM}" "${STAGING}/${ITEM}" 2>/dev/null || \
-      log "WARN: could not copy /opt/data/${ITEM}"
+# 1b. Everything else in /opt/data — denylist-filtered.
+# `ls -A` lists all entries including hidden files, but not . and ..
+mapfile -t ITEMS < <(docker exec "$CONTAINER_NAME" sh -c 'ls -A /opt/data' 2>/dev/null)
+
+INCLUDED=()
+SKIPPED=()
+for ITEM in "${ITEMS[@]}"; do
+  # state.db handled above
+  [[ "$ITEM" == "state.db" ]] && continue
+  if is_excluded "$ITEM"; then
+    SKIPPED+=("$ITEM")
+    continue
+  fi
+  if docker cp "${CONTAINER_NAME}:/opt/data/${ITEM}" "${STAGING}/${ITEM}" 2>/dev/null; then
+    INCLUDED+=("$ITEM")
+  else
+    log "WARN: could not copy /opt/data/${ITEM}"
   fi
 done
 
-# Intentionally NOT backed up:
-#   sessions/   — conversation history, large; opt-in later if needed
-#   auth.json   — auth tokens; security trade-off, not yet justified
-#   state.db-wal/-shm  — covered by the atomic .backup above; raw files
-#                        on their own would risk inconsistent restore
+log "Backed up (${#INCLUDED[@]}): ${INCLUDED[*]}"
+log "Skipped  (${#SKIPPED[@]}): ${SKIPPED[*]}"
 
 # --- Stage 2: redact secrets from config.yaml ---
 # Match `api_key: "..."` and `api_key: ...` patterns regardless of quoting.
