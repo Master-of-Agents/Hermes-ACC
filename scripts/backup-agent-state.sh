@@ -45,13 +45,46 @@ log "Snapshotting agent state for '$AGENT_NAME' from $CONTAINER_NAME..."
 STAGING="$(mktemp -d)"
 trap 'rm -rf "$STAGING"' EXIT
 
-# Individual identity files — copy whatever exists; skip the rest quietly.
-for ITEM in SOUL.md skills cron state.db config.yaml; do
+# 1a. SQLite state.db — use the online backup API for an atomic, consistent
+# snapshot even while the gateway is writing. Falls back to plain docker cp
+# if sqlite3 is not available in the container (older image).
+if docker exec "$CONTAINER_NAME" command -v sqlite3 >/dev/null 2>&1; then
+  if docker exec "$CONTAINER_NAME" sqlite3 /opt/data/state.db \
+       ".backup /tmp/state-snapshot.db" 2>/dev/null; then
+    docker cp "${CONTAINER_NAME}:/tmp/state-snapshot.db" "${STAGING}/state.db"
+    docker exec "$CONTAINER_NAME" rm -f /tmp/state-snapshot.db
+  else
+    log "WARN: sqlite3 .backup failed — falling back to direct copy"
+    docker cp "${CONTAINER_NAME}:/opt/data/state.db" "${STAGING}/state.db" 2>/dev/null || true
+  fi
+else
+  log "INFO: sqlite3 not in container — using plain copy (may be torn)"
+  docker cp "${CONTAINER_NAME}:/opt/data/state.db" "${STAGING}/state.db" 2>/dev/null || true
+fi
+
+# 1b. Identity & runtime files (each optional — skip silently if absent).
+# These were missing from earlier revisions of this script and were the
+# root cause of the 2026-05-15 "drill agent has no Berlin timezone memory"
+# finding. USER.md in particular holds the learned user profile.
+for ITEM in \
+    SOUL.md \
+    skills \
+    cron \
+    config.yaml \
+    memories \
+    channel_directory.json \
+    gateway_state.json; do
   if docker exec "$CONTAINER_NAME" test -e "/opt/data/${ITEM}" 2>/dev/null; then
     docker cp "${CONTAINER_NAME}:/opt/data/${ITEM}" "${STAGING}/${ITEM}" 2>/dev/null || \
       log "WARN: could not copy /opt/data/${ITEM}"
   fi
 done
+
+# Intentionally NOT backed up:
+#   sessions/   — conversation history, large; opt-in later if needed
+#   auth.json   — auth tokens; security trade-off, not yet justified
+#   state.db-wal/-shm  — covered by the atomic .backup above; raw files
+#                        on their own would risk inconsistent restore
 
 # --- Stage 2: redact secrets from config.yaml ---
 # Match `api_key: "..."` and `api_key: ...` patterns regardless of quoting.

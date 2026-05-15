@@ -187,15 +187,27 @@ state.
 4. Restore the agent's data into the container's volume:
    ```bash
    STATE_DIR="$HOME/hermes-state-${AGENT_NAME}"
-   for ITEM in SOUL.md skills cron state.db; do
+   for ITEM in \
+       SOUL.md \
+       skills \
+       cron \
+       state.db \
+       memories \
+       channel_directory.json \
+       gateway_state.json; do
      [[ -e "${STATE_DIR}/${ITEM}" ]] && \
        docker cp "${STATE_DIR}/${ITEM}" "hermes-agent:/opt/data/${ITEM}"
    done
    docker exec hermes-agent chown -R hermes:hermes /opt/data
+   sudo systemctl restart hermes-gateway
    ```
    Note: `config.yaml` in the backup is sanitized (API keys redacted),
    so it is NOT restored from backup. The wizard you just ran in Phase
    6 sets the live config including API keys.
+
+   The `memories/` directory holds the agent's learned user profile
+   (timezone, preferences, named-entity associations) — restoring this
+   is what carries the agent's "personality memory" across VPSes.
 
 ## Phase 7 — Install the gateway systemd service
 
