@@ -62,3 +62,11 @@ __pycache__/
 .cache/
 node_modules/
 .pre-commit-cache/
+
+# --- Operator scratch notes (kickoff prompts, cheat sheets, drafts) ---
+# Plain-text working notes that live in the repo root for convenience but
+# are intentionally outside version control. If a note becomes worth
+# tracking, move it to docs/ or runbooks/ and change extension to .md.
+*.txt
+!**/README.txt
+!**/LICENSE.txt
