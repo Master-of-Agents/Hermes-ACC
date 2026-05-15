@@ -23,10 +23,22 @@ Before touching the VPS, line up these items so you don't break flow:
 | `x.AI (Grok API)` | If you need to re-enter the API key in the wizard. **If the wizard fails with `HTTP 400` errors after model selection, generate a fresh xAI API key in the xAI console and use that instead — keys can become tier-restricted or lose access to specific model features over time.** |
 
 Also have ready:
-- Operator workstation SSH key (`~/.ssh/id_ed25519_hermes_vps`) — if you
-  switched workstations, generate a new one
-- GitHub deploy key (`~/.ssh/id_ed25519_hermes_acc`) — same: generate
-  new if lost; the old one is rotated regardless
+- Operator workstation SSH key — `~/.ssh/id_ed25519_hermes_vps` is
+  authorized for production. **Each VPS uses its own operator key** —
+  see `vps/ssh-access-model.md` for the authoritative mapping. Generate
+  a fresh one for any new VPS during break-glass.
+- GitHub deploy key — generated fresh per VPS during Phase 3; the old
+  one is rotated regardless if you're recovering.
+
+### Workstation SSH config (do this once, then forever)
+
+Maintain `~/.ssh/config` on your workstation with one `Host` block per
+VPS. Without it the SSH client falls through to a password prompt
+whenever you connect to a VPS that doesn't accept the default key —
+which can be very confusing in a multi-VPS world. See
+`vps/ssh-access-model.md` for the recommended format. Add a block
+**before** you start provisioning a new VPS so by the time SSH is set
+up, `ssh <alias>` just works.
 
 ---
 
@@ -266,6 +278,12 @@ sudo usermod -aG docker hermesctl
 exit  # log out and back in
 ```
 Then re-run bootstrap-vps.sh — it's idempotent.
+
+### `ssh hermesctl@<IP>` keeps prompting for a password
+The wrong SSH key is being offered. Each VPS authorizes only its own
+operator key (see `vps/ssh-access-model.md`). Fix immediately with
+`-i <correct-key>`, then maintain a `~/.ssh/config` block per VPS so
+this can't recur.
 
 ### Drill-specific: production and drill on the same Telegram bot token
 The sops file ships one production `TELEGRAM_BOT_TOKEN`. A drill VPS
